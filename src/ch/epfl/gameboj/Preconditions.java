@@ -1,5 +1,5 @@
 package gameboj;
-//oui
+
 public interface Preconditions {
 
     public static void checkArgument(boolean b) {
