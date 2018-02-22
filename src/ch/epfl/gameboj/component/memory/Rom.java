@@ -26,7 +26,8 @@ public final class Rom {
 
         if (!(index >= 0 && index <= 0xFF)) {
             throw new IndexOutOfBoundsException();
-        } else
+        } else {
             return Byte.toUnsignedInt(romData[index]);
+        }
     }
 }
