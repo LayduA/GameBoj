@@ -22,6 +22,7 @@ public final class Rom {
     }
 
     public int read(int index) {
+        
         Preconditions.checkBits8(index);
 
         if (!(index >= 0 && index <= 0xFF)) {
