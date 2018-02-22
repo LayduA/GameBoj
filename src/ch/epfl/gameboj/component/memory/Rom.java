@@ -1,29 +1,32 @@
 package gameboj.component.memory;
-import java.util.ArrayList;
+
 import java.util.Arrays;
+
 import gameboj.Preconditions;
 
 public final class Rom {
 
-    byte rom[];
-    
-    int l; 
-    
+    private byte[] romData;
+
     public Rom(byte[] data) {
-        l = data.length;
-        byte data2[] = Arrays.copyOf(data, l);
-        rom = data2;
+        if (data.length != 0) {
+            byte data2[] = Arrays.copyOf(data, data.length);
+            romData = data2;
+        } else {
+            throw new NullPointerException();
+        }
     }
 
     public int size() {
-        return rom.length;
+        return romData.length;
     }
-    
+
     public int read(int index) {
         Preconditions.checkBits8(index);
-        
+
         if (!(index >= 0 && index <= 0xFF)) {
             throw new IndexOutOfBoundsException();
-        } else return rom.indexOf(index);
+        } else
+            return Byte.toUnsignedInt(romData[index]);
     }
 }
