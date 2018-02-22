@@ -27,12 +27,21 @@ public final class RamController implements Component {
     }
 
     public RamController(Ram ram, int startAddress) {
-        super(ram, startAddress, (int) ram.read(ram.size() - 1));
-        
+        this(ram, startAddress, (int) ram.read(ram.size() - 1));        
     }
 
     public int read(int address) {
+        if (address < start || address > end) {
+            throw new IndexOutOfBoundsException();
+        }
         
         return ram.read(address);
+    }
+    
+    public void write(int address, int data) {
+        if (address < start || address > end) {
+            throw new IndexOutOfBoundsException();
+        }
+        ram.write(address, data);
     }
 }
