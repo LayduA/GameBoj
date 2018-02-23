@@ -16,7 +16,6 @@ public final class RamController implements Component {
 
         Preconditions.checkBits16(startAddress);
         Preconditions.checkBits16(endAddress);
-        // TODO
         if (endAddress - startAddress <= 0
                 || endAddress - startAddress >= ram.size()) {
             throw new IllegalArgumentException();
@@ -39,7 +38,7 @@ public final class RamController implements Component {
     }
     
     public void write(int address, int data) {
-        if (address < start || address > end) {
+        if (address < start || address >= end) {
             throw new IndexOutOfBoundsException();
         }
         ram.write(address, data);
