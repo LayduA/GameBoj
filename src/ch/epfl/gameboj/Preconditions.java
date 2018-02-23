@@ -26,4 +26,12 @@ public interface Preconditions {
             return v;
         }
     }
+    
+    public static int checkIndex(int index) {
+        if (index<0 || index >31) {
+            throw new IndexOutOfBoundsException();
+        }else {
+            return index;
+        }
+    }
 }
