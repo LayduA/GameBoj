@@ -52,4 +52,19 @@ public final class Bits {
         
     }
     
+    public static int rotate(int size, int bits, int distance) {
+        
+        if(size <= 0 || size > 32) {
+            throw new IllegalArgumentException();
+        }
+        if(distance >= size) {
+            distance = Math.floorMod(distance,size);
+        }
+        int strongBits = extract(bits,size,32-size);
+        bits = clip(size,bits);
+        bits = (clip(size,(bits<<distance)) | (bits>>>size-distance));
+         
+        return  bits | (strongBits<<size);
+    }
+    
 }

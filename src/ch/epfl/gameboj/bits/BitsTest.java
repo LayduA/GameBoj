@@ -209,8 +209,8 @@ class BitsTest {
         assertEquals(0x9, Bits.extract(0xFEDCBA98,  4, 4));
         assertEquals(0x8, Bits.extract(0xFEDCBA98,  0, 4));
     }
-}
-    /*
+
+    
     @Test
     void rotateFailsForInvalidSize() {
         assertThrows(IllegalArgumentException.class,
@@ -286,7 +286,8 @@ class BitsTest {
         assertEquals(0b01011, Bits.rotate(5, 0b01101, 3));
         assertEquals(0b10110, Bits.rotate(5, 0b01101, 4));
     }
-
+    }
+    /*
     @Test
     void signExtend8FailsOnInvalidValue() {
         assertThrows(IllegalArgumentException.class,
