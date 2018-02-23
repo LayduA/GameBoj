@@ -30,29 +30,26 @@ public final class Bits {
         checkIndex(index);
         if(newValue) {
             return bits | mask(index);
+        }else {
+            return bits & ~mask(index);
         }
-        //TODO jaj
-        return 2;
     }
     
     public static int clip(int size, int bits) {
         if(size <0 || size > 32) {
             throw new IllegalArgumentException();
         }
-        int temp =0;
-        for(int i = 0; i<size;i++) {
-            temp = temp | mask(i);
-        }
-        return bits & temp;
+        bits = bits<<(32-size);
+        bits = bits >>> (32-size);
+        return (size == 0 ? 0 : bits);
     }
     
     public static int extract(int bits, int start, int size) {
         Objects.checkFromIndexSize(start, size, 32);
-        int temp = 0;
-        for (int i = start; i<start+size;i++) {
-            temp = temp | mask(i);
-        }
-        return bits & temp;
+        bits = clip(start+size,bits);
+        bits = bits >>> (start);
+        return bits;
+        
     }
     
 }

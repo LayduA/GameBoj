@@ -9,7 +9,7 @@ public final class Rom {
     private byte[] romData;
 
     public Rom(byte[] data) {
-        if (data.length != 0) {
+        if (data != null) {
             byte data2[] = Arrays.copyOf(data, data.length);
             romData = data2;
         } else {
@@ -22,8 +22,6 @@ public final class Rom {
     }
 
     public int read(int index) {
-
-        Preconditions.checkBits8(index);
 
         if (!(index >= 0 && index <= 0xFF)) {
             throw new IndexOutOfBoundsException();

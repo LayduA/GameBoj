@@ -16,31 +16,35 @@ public final class RamController implements Component {
 
         Preconditions.checkBits16(startAddress);
         Preconditions.checkBits16(endAddress);
-        if (endAddress - startAddress <= 0
-                || endAddress - startAddress >= ram.size()) {
+        if (endAddress - startAddress < 0 || endAddress - startAddress >= ram.size()) {
             throw new IllegalArgumentException();
         }
-        
+        this.ram = ram;
         start = startAddress;
         end = endAddress;
     }
 
     public RamController(Ram ram, int startAddress) {
-        this(ram, startAddress, (int) ram.read(ram.size() - 1));        
+       this(ram, startAddress, startAddress + ram.size() - 1);
     }
 
     public int read(int address) {
+        Preconditions.checkBits16(address);
+        
         if (address < start || address > end) {
-            throw new IndexOutOfBoundsException();
+            return Component.NO_DATA;
         }
         
-        return ram.read(address);
+        return ram.read(address-start);
     }
     
     public void write(int address, int data) {
-        if (address < start || address >= end) {
-            throw new IndexOutOfBoundsException();
+        Preconditions.checkBits16(address);
+        Preconditions.checkBits8(data);
+        
+        if (!(address < start || address > end)) {
+            ram.write(address-start, data);
         }
-        ram.write(address, data);
+       
     }
 }
