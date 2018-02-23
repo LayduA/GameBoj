@@ -1,8 +1,8 @@
-package gameboj;
+package ch.epfl.gameboj;
 
 import java.util.ArrayList;
 
-import gameboj.component.Component;
+import ch.epfl.gameboj.component.Component;
 
 public final class Bus {
     

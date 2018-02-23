@@ -1,4 +1,4 @@
-package gameboj.bits;
+package ch.epfl.gameboj.bits;
 
 public interface Bit {
 
@@ -9,8 +9,8 @@ public interface Bit {
     }
 
     public default int mask() {
-        // TODO : implement
-        return 0;
+
+        return Bits.mask(index());
 
     }
 

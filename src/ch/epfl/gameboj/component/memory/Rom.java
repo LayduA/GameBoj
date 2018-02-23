@@ -1,8 +1,8 @@
-package gameboj.component.memory;
+package ch.epfl.gameboj.component.memory;
 
 import java.util.Arrays;
 
-import gameboj.Preconditions;
+import ch.epfl.gameboj.Preconditions;
 
 public final class Rom {
 

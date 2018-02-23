@@ -1,4 +1,4 @@
-package gameboj.component;
+package ch.epfl.gameboj.component;
 
 public interface Component {
     

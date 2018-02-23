@@ -1,6 +1,6 @@
-package gameboj.component.memory;
+package ch.epfl.gameboj.component.memory;
 
-import static gameboj.Preconditions.checkBits8;;
+import static ch.epfl.gameboj.Preconditions.checkBits8;;
 
 public final class Ram {
 

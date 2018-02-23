@@ -1,7 +1,7 @@
-package gameboj.component.memory;
+package ch.epfl.gameboj.component.memory;
 
-import gameboj.Preconditions;
-import gameboj.component.Component;
+import ch.epfl.gameboj.Preconditions;
+import ch.epfl.gameboj.component.Component;
 
 public final class RamController implements Component {
 
