@@ -45,15 +45,20 @@ class BitsTest {
             0b00010000000000000000000000000000,
             0b00100000000000000000000000000000,
             0b01000000000000000000000000000000,
-            0b10000000000000000000000000000000, };
+            0b10000000000000000000000000000000,
+    };
 
     private enum AllBits implements Bit {
-        B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, B13, B14, B15, B16, B17, B18, B19, B20, B21, B22, B23, B24, B25, B26, B27, B28, B29, B30, B31,
+        B00, B01, B02, B03, B04, B05, B06, B07,
+        B08, B09, B10, B11, B12, B13, B14, B15,
+        B16, B17, B18, B19, B20, B21, B22, B23,
+        B24, B25, B26, B27, B28, B29, B30, B31,
     };
 
     @Test
     void maskFailsForInvalidIndex() {
-        assertThrows(IndexOutOfBoundsException.class, () -> Bits.mask(-1));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> Bits.mask(-1));
         assertThrows(IndexOutOfBoundsException.class,
                 () -> Bits.mask(Integer.SIZE));
     }
@@ -66,7 +71,8 @@ class BitsTest {
 
     @Test
     void testFailsForInvalidIndex() {
-        assertThrows(IndexOutOfBoundsException.class, () -> Bits.test(0, -1));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> Bits.test(0, -1));
         assertThrows(IndexOutOfBoundsException.class,
                 () -> Bits.test(0, Integer.SIZE));
     }
@@ -85,7 +91,7 @@ class BitsTest {
     void test2WorksForValuesWithSingleBitSet() {
         for (int i = 0; i < Integer.SIZE; ++i) {
             int m = ALL_MASKS[i];
-            for (Bit b : AllBits.values()) {
+            for (Bit b: AllBits.values()) {
                 assertEquals(i == b.ordinal(), Bits.test(m, b));
             }
         }
@@ -120,7 +126,8 @@ class BitsTest {
 
     @Test
     void clipFailsForInvalidSize() {
-        assertThrows(IllegalArgumentException.class, () -> Bits.clip(-1, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> Bits.clip(-1, 0));
         assertThrows(IllegalArgumentException.class,
                 () -> Bits.clip(Integer.SIZE + 1, 0));
     }
@@ -140,9 +147,7 @@ class BitsTest {
         Random rng = newRandom();
         for (int i = 0; i < Integer.SIZE; ++i) {
             for (int j = 0; j < RANDOM_ITERATIONS; ++j) {
-                int c = rng.nextInt();
-                int b = Bits.clip(i, c);
-
+                int b = Bits.clip(i, rng.nextInt());
                 assertTrue(0 <= b && b <= ALL_MASKS[i] - 1);
             }
         }
@@ -150,9 +155,12 @@ class BitsTest {
 
     @Test
     void extractFailsForInvalidRanges() {
-        int[][] invalidRanges = new int[][] { { -1, 1 },
-                { 0, Integer.SIZE + 1 }, { 1, Integer.SIZE } };
-        for (int[] r : invalidRanges) {
+        int[][] invalidRanges = new int[][] {
+            { -1, 1 },
+            { 0, Integer.SIZE + 1 },
+            { 1, Integer.SIZE }
+        };
+        for (int[] r: invalidRanges) {
             assertThrows(IndexOutOfBoundsException.class,
                     () -> Bits.extract(0, r[0], r[1]));
         }
@@ -195,9 +203,9 @@ class BitsTest {
         assertEquals(0xD, Bits.extract(0xFEDCBA98, 20, 4));
         assertEquals(0xC, Bits.extract(0xFEDCBA98, 16, 4));
         assertEquals(0xB, Bits.extract(0xFEDCBA98, 12, 4));
-        assertEquals(0xA, Bits.extract(0xFEDCBA98, 8, 4));
-        assertEquals(0x9, Bits.extract(0xFEDCBA98, 4, 4));
-        assertEquals(0x8, Bits.extract(0xFEDCBA98, 0, 4));
+        assertEquals(0xA, Bits.extract(0xFEDCBA98,  8, 4));
+        assertEquals(0x9, Bits.extract(0xFEDCBA98,  4, 4));
+        assertEquals(0x8, Bits.extract(0xFEDCBA98,  0, 4));
     }
 
     @Test
@@ -214,10 +222,8 @@ class BitsTest {
         for (int i = 0; i < RANDOM_ITERATIONS; ++i) {
             int v = rng.nextInt();
             int d = rng.nextInt();
-            assertEquals(Integer.rotateLeft(v, d),
-                    Bits.rotate(Integer.SIZE, v, d));
-            assertEquals(Integer.rotateLeft(~v, d),
-                    Bits.rotate(Integer.SIZE, ~v, d));
+            assertEquals(Integer.rotateLeft(v, d), Bits.rotate(Integer.SIZE, v, d));
+            assertEquals(Integer.rotateLeft(~v, d), Bits.rotate(Integer.SIZE, ~v, d));
         }
     }
 
@@ -250,8 +256,7 @@ class BitsTest {
             int v24 = rng.nextInt(0x100_0000);
             int d = rng.nextInt(24);
             int k = rng.nextInt(11) - 5;
-            assertEquals(Bits.rotate(24, v24, d),
-                    Bits.rotate(24, v24, d + 24 * k));
+            assertEquals(Bits.rotate(24, v24, d), Bits.rotate(24, v24, d + 24 * k));
         }
     }
 
@@ -298,7 +303,8 @@ class BitsTest {
     void reverse8FailsOnInvalidValue() {
         assertThrows(IllegalArgumentException.class,
                 () -> Bits.reverse8(0x100));
-        assertThrows(IllegalArgumentException.class, () -> Bits.reverse8(-1));
+        assertThrows(IllegalArgumentException.class,
+                () -> Bits.reverse8(-1));
     }
 
     @Test
@@ -347,10 +353,12 @@ class BitsTest {
     void make16FailsOnInvalidValues() {
         assertThrows(IllegalArgumentException.class,
                 () -> Bits.make16(0x100, 0));
-        assertThrows(IllegalArgumentException.class, () -> Bits.make16(-1, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> Bits.make16(-1, 0));
         assertThrows(IllegalArgumentException.class,
                 () -> Bits.make16(0, 0x100));
-        assertThrows(IllegalArgumentException.class, () -> Bits.make16(0, -1));
+        assertThrows(IllegalArgumentException.class,
+                () -> Bits.make16(0, -1));
     }
 
     @Test
@@ -373,3 +381,4 @@ class BitsTest {
         }
     }
 }
+
