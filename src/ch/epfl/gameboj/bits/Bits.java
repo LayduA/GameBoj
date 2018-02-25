@@ -37,7 +37,12 @@ public final class Bits {
             return bits & ~mask(index);
         }
     }
-
+    /**
+     * Keeps only the least important bits of an integer.
+     * @param size : the number of bits to keep (all those before will be set to 0)
+     * @param bits : the integer to clip
+     * @return the truncated integer
+     */
     public static int clip(int size, int bits) {
         if (size < 0 || size > 32) {
             throw new IllegalArgumentException();
