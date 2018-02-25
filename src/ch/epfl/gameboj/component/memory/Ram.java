@@ -1,6 +1,8 @@
 package ch.epfl.gameboj.component.memory;
 
-import static ch.epfl.gameboj.Preconditions.checkBits8;;
+import static ch.epfl.gameboj.Preconditions.checkBits8;
+
+import java.util.Objects;;
 
 public final class Ram {
 
@@ -13,31 +15,23 @@ public final class Ram {
             throw new IllegalArgumentException();
         }
     }
-    
 
     public int size() {
         return ramData.length;
     }
-    
 
     public int read(int index) {
 
-        if (index >= 0 && index < ramData.length) {
-            return Byte.toUnsignedInt(ramData[index]);
-        } else {
-            throw new IndexOutOfBoundsException();
-        }
+        Objects.checkIndex(index, ramData.length);
+        return Byte.toUnsignedInt(ramData[index]);
+
     }
-    
 
     public void write(int index, int value) {
-        
+
         checkBits8(value);
-        if (index < 0 || index >= ramData.length) {
-            throw new IndexOutOfBoundsException();
-        } else {
-            ramData[index]=(byte)value;
-        }
+        Objects.checkIndex(index, ramData.length);
+        ramData[index] = (byte) value;
 
     }
 }

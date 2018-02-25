@@ -1,8 +1,7 @@
 package ch.epfl.gameboj.component.memory;
 
 import java.util.Arrays;
-
-import ch.epfl.gameboj.Preconditions;
+import java.util.Objects;
 
 public final class Rom {
 
@@ -23,10 +22,8 @@ public final class Rom {
 
     public int read(int index) {
 
-        if (!(index >= 0 && index <= 0xFF)) {
-            throw new IndexOutOfBoundsException();
-        } else {
-            return Byte.toUnsignedInt(romData[index]);
-        }
+       Objects.checkIndex(index, 0x100);
+       return Byte.toUnsignedInt(romData[index]);
+        
     }
 }

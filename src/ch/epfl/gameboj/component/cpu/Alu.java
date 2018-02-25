@@ -4,6 +4,9 @@ import ch.epfl.gameboj.bits.Bit;
 import ch.epfl.gameboj.bits.Bits;
 
 import static ch.epfl.gameboj.bits.Bits.*;
+
+import java.util.Objects;
+
 import static ch.epfl.gameboj.Preconditions.*;
 
 public final class Alu {
@@ -194,7 +197,19 @@ public final class Alu {
         return packValueZNHC(value,isZero(value),false, false,getC);
     }
     
+    public static int swap (int v) {
+        checkBits8(v);
+        
+        int value = (clip(4,v)<<4) | extract(v,4,4);
+        
+        return packValueZNHC(value, isZero(value), false, false, false);
+    }
     
+    public static int testBit(int v, int bitIndex) {
+        checkBits8(v);
+        Objects.checkIndex(bitIndex, 8);
+        return packValueZNHC(0, test(v,bitIndex), false, true, false);
+    }
     
     private static int packValueZNHC(int v, boolean z, boolean n, boolean h, boolean c) {
         return (v <<8) | maskZNHC(z,n,h,c);
@@ -204,6 +219,6 @@ public final class Alu {
     }
     
     public static void main(String[] args) {
-        System.out.println(rotate(RotDir.LEFT,0x80,false));
+        System.out.println(testBit(0b1010_1110,5));
     }
 }

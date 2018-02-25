@@ -1,6 +1,6 @@
 package ch.epfl.gameboj.component.memory;
 
-import ch.epfl.gameboj.Preconditions;
+import static ch.epfl.gameboj.Preconditions.*;
 import ch.epfl.gameboj.component.Component;
 
 public final class RamController implements Component {
@@ -14,8 +14,8 @@ public final class RamController implements Component {
             throw new NullPointerException();
         }
 
-        Preconditions.checkBits16(startAddress);
-        Preconditions.checkBits16(endAddress);
+        checkBits16(startAddress);
+        checkBits16(endAddress);
         if (endAddress - startAddress < 0 || endAddress - startAddress >= ram.size()) {
             throw new IllegalArgumentException();
         }
@@ -29,7 +29,7 @@ public final class RamController implements Component {
     }
 
     public int read(int address) {
-        Preconditions.checkBits16(address);
+        checkBits16(address);
         
         if (address < start || address > end) {
             return Component.NO_DATA;
@@ -39,8 +39,8 @@ public final class RamController implements Component {
     }
     
     public void write(int address, int data) {
-        Preconditions.checkBits16(address);
-        Preconditions.checkBits8(data);
+        checkBits16(address);
+        checkBits8(data);
         
         if (!(address < start || address > end)) {
             ram.write(address-start, data);
