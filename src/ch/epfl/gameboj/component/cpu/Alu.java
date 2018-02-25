@@ -14,7 +14,7 @@ public final class Alu {
     private Alu() {
     }
 
-    public enum Flags implements Bit {
+    public enum Flag implements Bit {
 
         UNUSED_0, UNUSED_1, UNUSED_2, UNUSED_3, C, H, N, Z
 
@@ -29,13 +29,13 @@ public final class Alu {
 
         int mask = 0;
         if (z)
-            mask = mask | Flags.Z.mask();
+            mask = mask | Flag.Z.mask();
         if (n)
-            mask = mask | Flags.N.mask();
+            mask = mask | Flag.N.mask();
         if (h)
-            mask = mask | Flags.H.mask();
+            mask = mask | Flag.H.mask();
         if (c)
-            mask = mask | Flags.C.mask();
+            mask = mask | Flag.C.mask();
         return mask;
     }
 
