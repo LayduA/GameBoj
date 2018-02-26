@@ -222,8 +222,4 @@ public final class Alu {
     private static boolean isZero(int v) {
         return (v == 0);
     }
-
-    public static void main(String[] args) {
-        System.out.println(sub(0x10, 0x80));
-    }
 }
