@@ -120,7 +120,7 @@ public final class Alu {
 
         int value = (n ? v - fixStep2 : v + fixStep2);
 
-        return packValueZNHC(value ,isZero(value), n, false, fixH);
+        return packValueZNHC(value, isZero(value), n, false, fixH);
     }
 
     public static int and(int l, int r) {
@@ -130,7 +130,7 @@ public final class Alu {
 
         int value = l & r;
 
-        return packValueZNHC(value ,isZero(value), false, true, false);
+        return packValueZNHC(value, isZero(value), false, true, false);
     }
 
     public static int or(int l, int r) {
@@ -140,7 +140,7 @@ public final class Alu {
 
         int value = l | r;
 
-        return packValueZNHC(value ,isZero(value), false, false, false);
+        return packValueZNHC(value, isZero(value), false, false, false);
     }
 
     public static int xor(int l, int r) {
@@ -149,8 +149,8 @@ public final class Alu {
         checkBits8(r);
 
         int value = l ^ r;
-        
-        return packValueZNHC(value ,isZero(value), false, false, false);
+
+        return packValueZNHC(value, isZero(value), false, false, false);
     }
 
     public static int shiftLeft(int v) {
@@ -158,67 +158,72 @@ public final class Alu {
 
         int value = clip(8, v << 1);
 
-        return packValueZNHC(value, isZero(value), false, false, test(v,7));
+        return packValueZNHC(value, isZero(value), false, false, test(v, 7));
     }
-    
+
     public static int shiftRightA(int v) {
         checkBits8(v);
-        
-        int value = (test(v,7) ? v>>1 | mask(7) :v>>1);
-        
-        return packValueZNHC(value, isZero(value), false, false, test(v,0));
+
+        int value = (test(v, 7) ? v >> 1 | mask(7) : v >> 1);
+
+        return packValueZNHC(value, isZero(value), false, false, test(v, 0));
     }
 
     public static int shiftRightL(int v) {
         checkBits8(v);
-        
-        int value = v>>1;
-        
-        return packValueZNHC(value,isZero(value),false,false,test(v,0));
+
+        int value = v >> 1;
+
+        return packValueZNHC(value, isZero(value), false, false, test(v, 0));
     }
-    
+
     public static int rotate(RotDir d, int v) {
         checkBits8(v);
-        
-        int value = (d == RotDir.RIGHT ? Bits.rotate(8,v,-1):Bits.rotate(8,v,1));
+
+        int value = (d == RotDir.RIGHT ? Bits.rotate(8, v, -1)
+                : Bits.rotate(8, v, 1));
         int bitSwitched = (d == RotDir.RIGHT ? 0 : 7);
-        
-        return packValueZNHC(value, isZero(value), false, false, test(v,bitSwitched));
+
+        return packValueZNHC(value, isZero(value), false, false,
+                test(v, bitSwitched));
     }
-    
+
     public static int rotate(RotDir d, int v, boolean c) {
         checkBits8(v);
-        
-        int value = (c ? v | mask(8):v);
-        value = (d == RotDir.RIGHT ? Bits.rotate(9,value,-1):Bits.rotate(9,value,1));
-        boolean getC = test(value,8);
-        value = clip(8,value);
-        
-        return packValueZNHC(value,isZero(value),false, false,getC);
+
+        int value = (c ? v | mask(8) : v);
+        value = (d == RotDir.RIGHT ? Bits.rotate(9, value, -1)
+                : Bits.rotate(9, value, 1));
+        boolean getC = test(value, 8);
+        value = clip(8, value);
+
+        return packValueZNHC(value, isZero(value), false, false, getC);
     }
-    
-    public static int swap (int v) {
+
+    public static int swap(int v) {
         checkBits8(v);
-        
-        int value = (clip(4,v)<<4) | extract(v,4,4);
-        
+
+        int value = (clip(4, v) << 4) | extract(v, 4, 4);
+
         return packValueZNHC(value, isZero(value), false, false, false);
     }
-    
+
     public static int testBit(int v, int bitIndex) {
         checkBits8(v);
         Objects.checkIndex(bitIndex, 8);
-        return packValueZNHC(0, test(v,bitIndex), false, true, false);
+        return packValueZNHC(0, test(v, bitIndex), false, true, false);
     }
-    
-    private static int packValueZNHC(int v, boolean z, boolean n, boolean h, boolean c) {
-        return (v <<8) | maskZNHC(z,n,h,c);
+
+    private static int packValueZNHC(int v, boolean z, boolean n, boolean h,
+            boolean c) {
+        return (v << 8) | maskZNHC(z, n, h, c);
     }
+
     private static boolean isZero(int v) {
         return (v == 0);
     }
-    
+
     public static void main(String[] args) {
-        System.out.println(testBit(0b1010_1110,5));
+        System.out.println(sub(0x10, 0x80));
     }
 }
