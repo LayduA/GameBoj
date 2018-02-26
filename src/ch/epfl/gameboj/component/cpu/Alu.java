@@ -218,7 +218,4 @@ public final class Alu {
         return (v == 0);
     }
     
-    public static void main(String[] args) {
-        System.out.println(testBit(0b1010_1110,5));
-    }
 }

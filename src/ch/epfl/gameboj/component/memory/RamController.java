@@ -25,7 +25,7 @@ public final class RamController implements Component {
     }
 
     public RamController(Ram ram, int startAddress) {
-       this(ram, startAddress, startAddress + ram.size() - 1);
+       this(ram, startAddress, startAddress + ram.size()-1);
     }
 
     public int read(int address) {
