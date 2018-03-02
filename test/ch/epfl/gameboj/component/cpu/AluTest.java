@@ -31,6 +31,9 @@ class AluTest {
                 0b0001_1011_0010_0000);
         assertEquals(Alu.add(0b0011_1000, 0b0100_1110, false),
                 0b1000_0110_0010_0000);
+        assertEquals(Alu.add(0b1111_0101, 0b0011_1101, false),
+                0b0011_0010_0011_0000);
+
     }
 
     @Test
@@ -96,12 +99,41 @@ class AluTest {
     void rotateWorksForKnownValues() {
         assertEquals(Alu.rotate(RotDir.LEFT, 0b0101_1110),
                 0b1011_1100_0000_0000);
+        assertEquals(Alu.rotate(RotDir.LEFT, 0b1101_1110),
+                0b1011_1101_0001_0000);
         assertEquals(Alu.rotate(RotDir.RIGHT, 0b0101_1110),
                 0b0010_1111_0000_0000);
+
     }
 
-   @Test
+    @Test
     void rotate2WorksForKnownValues() {
-        assertEquals(Alu.rotate(RotDir.LEFT, 0b1100_1011, true), 0b1001_0111_0001_0000);
-   }
+        assertEquals(Alu.rotate(RotDir.LEFT, 0b1100_1011, true),
+                0b1001_0111_0001_0000);
+        assertEquals(Alu.rotate(RotDir.RIGHT, 0b1100_1011, false),
+                0b0110_0101_0001_0000);
+    }
+
+    @Test
+    void swapWorksForKnownValues() {
+        assertEquals(Alu.swap(0b0011_1011), 0b1011_0011_0000_0000);
+        assertEquals(Alu.swap(0b0000_0000), 0b0000_0000_1000_0000);
+    }
+
+    @Test
+    void testBitFailsForInvalidIndex() {
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> Alu.testBit(0b1101_0101, 8));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> Alu.testBit(0b1101_0101, -1));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> Alu.testBit(0b1101_0101, 31));
+    }
+
+    @Test
+    void testBitWorksForKnownValues() {
+        assertEquals(Alu.testBit(0b1101_0010, 3), 0b0000_0000_0010_0000);
+        assertEquals(Alu.testBit(0b1101_0011, 0), 0b0000_0000_1010_0000);
+        assertEquals(Alu.testBit(0b1101_0010, 7), 0b0000_0000_1010_0000);
+    }
 }
