@@ -16,16 +16,16 @@ public final class RamController implements Component {
 
         checkBits16(startAddress);
         checkBits16(endAddress);
-        if (endAddress - startAddress < 0 || endAddress - startAddress >= ram.size()) {
+        if (endAddress - startAddress < 0 || endAddress - startAddress > ram.size()) {
             throw new IllegalArgumentException();
         }
         this.ram = ram;
         start = startAddress;
-        end = endAddress;
+        end = endAddress-1;
     }
 
     public RamController(Ram ram, int startAddress) {
-       this(ram, startAddress, startAddress + ram.size()-1);
+       this(ram, startAddress, startAddress + ram.size());
     }
 
     public int read(int address) {
