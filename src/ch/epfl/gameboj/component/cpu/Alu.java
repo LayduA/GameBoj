@@ -41,7 +41,7 @@ public final class Alu {
 
     public static int unpackValue(int valueFlags) {
 
-        return extract(valueFlags, 8, 8);
+        return extract(valueFlags,8,16);
     }
 
     public static int unpackFlags(int valueFlags) {
@@ -116,7 +116,7 @@ public final class Alu {
         boolean fixH = c || (!n && v > 0x99);
 
         int fixStep1 = (fixH ? 0x60 : 0);
-        int fixStep2 = fixStep1 + (fixL ? 6 : 0);
+        int fixStep2 = fixStep1 + (fixL ? 0x6 : 0);
 
         int value = (n ? v - fixStep2 : v + fixStep2);
 
