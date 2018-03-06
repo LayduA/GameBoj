@@ -83,10 +83,11 @@ public final class Alu {
 
         checkBits16(l);
         checkBits16(r);
-        int value = clip(16, l + r);
+        int value = clip(16, l + r), carry = (clip(8, l) + clip(8, r) > 0xFF ? 1 : 0);
         int flags = maskZNHC(false, false,
-                extract(l, 8, 4) + extract(r, 8, 4) > 0xF,
-                extract(l, 8, 8) + extract(r, 8, 8) > 0xFF);
+                (extract(l, 8, 4) + extract(r, 8, 4) > 0xF-carry),
+                (extract(l, 8, 8) + extract(r, 8, 8) > 0xFF-carry));
+        System.out.println(flags);
         return (value << 8) | flags;
     }
 
@@ -115,12 +116,10 @@ public final class Alu {
         boolean fixL = h || (!n && clip(4, v) > 9);
         boolean fixH = c || (!n && v > 0x99);
 
-        int fixStep1 = (fixH ? 0x60 : 0);
-        int fixStep2 = fixStep1 + (fixL ? 0x6 : 0);
+        int fix = (fixH ? 0x60 : 0) + (fixL ? 0x6 : 0);
+        int value = (n ? v - fix : v + fix);
 
-        int value = (n ? v - fixStep2 : v + fixStep2);
-
-        return packValueZNHC(value, isZero(value), n, false, fixH);
+        return packValueZNHC(clip(8,value), isZero(clip(8,value)), n, false, fixH);
     }
 
     public static int and(int l, int r) {
@@ -211,7 +210,7 @@ public final class Alu {
     public static int testBit(int v, int bitIndex) {
         checkBits8(v);
         Objects.checkIndex(bitIndex, 8);
-        return packValueZNHC(0, test(v, bitIndex), false, true, false);
+        return packValueZNHC(0, !test(v, bitIndex), false, true, false);
     }
 
     private static int packValueZNHC(int v, boolean z, boolean n, boolean h,
