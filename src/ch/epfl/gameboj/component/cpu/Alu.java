@@ -87,7 +87,6 @@ public final class Alu {
         int flags = maskZNHC(false, false,
                 (extract(l, 8, 4) + extract(r, 8, 4) > 0xF-carry),
                 (extract(l, 8, 8) + extract(r, 8, 8) > 0xFF-carry));
-        System.out.println(flags);
         return (value << 8) | flags;
     }
 
