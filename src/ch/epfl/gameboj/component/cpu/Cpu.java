@@ -8,6 +8,7 @@ import ch.epfl.gameboj.component.Clocked;
 import ch.epfl.gameboj.component.Component;
 import static ch.epfl.gameboj.AddressMap.*;
 import static ch.epfl.gameboj.Preconditions.*;
+import static ch.epfl.gameboj.bits.Bits.*;
 
 public final class Cpu implements Component, Clocked {
 
@@ -31,6 +32,7 @@ public final class Cpu implements Component, Clocked {
 
     public void cycle(long cycle) {
         if (cycle < nextNonIdleCycle) {
+            System.out.println(cycle);
             return;
         } else {
             dispatch();
@@ -53,9 +55,9 @@ public final class Cpu implements Component, Clocked {
         case LD_A_HLRU: {
             int c = extractHlIncrement(opcode);
             setReg(Reg.A, read8AtHl());
-            int newHl = Bits.clip(16,reg16(Reg16.HL)+c);
-            setReg(Reg.L, Bits.clip(8, newHl));
-            setReg(Reg.H, Bits.extract(newHl, 8, 8));
+            int newHl = clip(16,reg16(Reg16.HL)+c);
+            setReg(Reg.L, clip(8, newHl));
+            setReg(Reg.H, extract(newHl, 8, 8));
         }
             break;
         case LD_A_N8R: {
@@ -102,9 +104,9 @@ public final class Cpu implements Component, Clocked {
         case LD_HLRU_A: {
             write8AtHl(getReg(Reg.A));
             int c = extractHlIncrement(opcode);
-            int newHl = Bits.clip(16,regPair(Reg.H,Reg.L)+c);
-            setReg(Reg.L, Bits.clip(8, newHl));
-            setReg(Reg.H, Bits.extract(newHl, 8, 8));
+            int newHl = clip(16,reg16(Reg16.HL)+c);
+            setReg(Reg.L, clip(8, newHl));
+            setReg(Reg.H, extract(newHl, 8, 8));
         }
             break;
         case LD_N8R_A: {
@@ -177,16 +179,16 @@ public final class Cpu implements Component, Clocked {
     }
 
     private Reg extractReg(Opcode opcode, int startBit) {
-        int registerCode = Bits.extract(opcode.encoding, startBit, 3);
+        int registerCode = extract(opcode.encoding, startBit, 3);
         if (registerCode == 0b111)
             return Reg.A;
-        if (registerCode == 0b101)
+        if (registerCode == 0b110)
             return null;
         return Reg.values()[registerCode + 2];
     }
 
     private Reg16 extractReg16(Opcode opcode) {
-        int registerCode = Bits.extract(opcode.encoding, 4, 2);
+        int registerCode = extract(opcode.encoding, 4, 2);
         if (registerCode == 0b11)
             return Reg16.AF;
         return Reg16.values()[registerCode + 1];
@@ -204,14 +206,11 @@ public final class Cpu implements Component, Clocked {
         regs[1] = SP;
         int i = 2;
         for (Reg a : Reg.values()) {
-            regs[i] = bits8registerFile.get(a);
+            System.out.println(a);
+            regs[i] = getReg(a);
             i++;
         }
         return regs;
-    }
-
-    private int regPair(Reg reg1, Reg reg2) {
-        return (bits8registerFile.get(reg1) << 8 + bits8registerFile.get(reg2));
     }
 
     private void increment(Opcode o) {
@@ -224,7 +223,7 @@ public final class Cpu implements Component, Clocked {
     }
 
     private int read8AtHl() {
-        return bus.read(regPair(Reg.H, Reg.L));
+        return bus.read(reg16(Reg16.HL));
     }
 
     private int read8AfterOpcode() {
@@ -232,7 +231,7 @@ public final class Cpu implements Component, Clocked {
     }
 
     private int read16(int address) {
-        return (bus.read(address + 1) << 8) | bus.read(address);
+        return make16(bus.read(address+1),bus.read(address));
     }
     
     private int read16AfterOpcode() {
@@ -249,7 +248,7 @@ public final class Cpu implements Component, Clocked {
     }
 
     private void write8AtHl(int v) {
-        bus.write(regPair(Reg.H, Reg.L), v);
+        bus.write(reg16(Reg16.HL), v);
     }
 
     private void push16(int v) {
@@ -264,17 +263,17 @@ public final class Cpu implements Component, Clocked {
     }
     
     private int reg16(Reg16 r) {
-        int strongBits = getReg(Reg.values()[r.index()])<<8;
-        int weakBits = getReg(Reg.values()[r.index()+1]);
-        return strongBits | weakBits;
+        int strongBits = getReg(Reg.values()[2*r.index()]);
+        int weakBits = getReg(Reg.values()[2*r.index()+1]);
+        return make16(strongBits,weakBits);
     }
     
     private void setReg16(Reg16 r, int newV) {
         checkBits16(newV);
-        int strongBits = Bits.extract(newV, 8, 8);
-        int weakBits = (r == Reg16.AF ? 0 : Bits.clip(8, newV));
-        setReg(Reg.values()[r.ordinal()],strongBits);
-        setReg(Reg.values()[r.ordinal()+1],weakBits);
+        int strongBits = extract(newV, 8, 8);
+        int weakBits = (r== Reg16.AF ? extract(newV, 4, 4)<<4 :clip(8, newV));
+        setReg(Reg.values()[2*r.index()],strongBits);
+        setReg(Reg.values()[2*r.index()+1],weakBits);
     }
     private void setReg16SP(Reg16 r, int newV) {
         checkBits16(newV);
