@@ -43,7 +43,6 @@ public final class Cpu implements Component, Clocked {
 
         int opcodeEncoding = bus.read(PC);
         Opcode opcode = DIRECT_OPCODE_TABLE[opcodeEncoding];
-        System.out.println(opcode);
         switch (opcode.family) {
         case NOP: {
             increment(opcode);
