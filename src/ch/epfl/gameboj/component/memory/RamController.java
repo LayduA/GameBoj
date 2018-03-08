@@ -15,7 +15,7 @@ public final class RamController implements Component {
         }
 
         checkBits16(startAddress);
-        checkBits16(endAddress);
+        checkBits16(endAddress-1);
         if (endAddress - startAddress < 0 || endAddress - startAddress > ram.size()) {
             throw new IllegalArgumentException();
         }
