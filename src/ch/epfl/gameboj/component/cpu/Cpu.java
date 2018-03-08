@@ -32,6 +32,7 @@ public final class Cpu implements Component, Clocked {
 
     public void cycle(long cycle) {
         if (cycle < nextNonIdleCycle) {
+            
             return;
         } else {
             dispatch();
@@ -42,6 +43,7 @@ public final class Cpu implements Component, Clocked {
 
         int opcodeEncoding = bus.read(PC);
         Opcode opcode = DIRECT_OPCODE_TABLE[opcodeEncoding];
+        System.out.println(opcode);
         switch (opcode.family) {
         case NOP: {
             increment(opcode);
@@ -169,6 +171,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_SP_HL: {
+            
             SP = reg16(Reg16.HL);
             increment(opcode);
         }
