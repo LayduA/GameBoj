@@ -53,8 +53,9 @@ public final class Cpu implements Component, Clocked {
         case LD_A_HLRU: {
             int c = extractHlIncrement(opcode);
             setReg(Reg.A, read8AtHl());
-            setReg(Reg.L, Bits.clip(4, regPair(Reg.H, Reg.L)) + c);
-            setReg(Reg.H, Bits.extract(regPair(Reg.H, Reg.L), 8, 8));
+            int newHl = Bits.clip(16,reg16(Reg16.HL)+c);
+            setReg(Reg.L, Bits.clip(8, newHl));
+            setReg(Reg.H, Bits.extract(newHl, 8, 8));
         }
             break;
         case LD_A_N8R: {
@@ -78,53 +79,84 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_R8_N8: {
+            Reg r = extractReg(opcode,3);
+            setReg(r,read8AfterOpcode());
         }
             break;
         case LD_R16SP_N16: {
+            int newV = read16AfterOpcode();
+            Reg16 reg = extractReg16(opcode);
+            setReg16SP(reg,newV);
         }
             break;
         case POP_R16: {
+            Reg16 reg = extractReg16(opcode);
+            setReg16(reg, pop16());
         }
             break;
         case LD_HLR_R8: {
+            Reg reg = extractReg(opcode,0);
+            write8AtHl(getReg(reg));
         }
             break;
         case LD_HLRU_A: {
+            write8AtHl(getReg(Reg.A));
+            int c = extractHlIncrement(opcode);
+            int newHl = Bits.clip(16,regPair(Reg.H,Reg.L)+c);
+            setReg(Reg.L, Bits.clip(8, newHl));
+            setReg(Reg.H, Bits.extract(newHl, 8, 8));
         }
             break;
         case LD_N8R_A: {
+            int address = read8AfterOpcode() + REGS_START;
+            write8(address, getReg(Reg.A));
         }
             break;
         case LD_CR_A: {
+            int address = getReg(Reg.C)+REGS_START;
+            write8(address, getReg(Reg.A));
         }
             break;
         case LD_N16R_A: {
+            int address = read16AfterOpcode();
+            write8(address,getReg(Reg.A));
         }
             break;
         case LD_BCR_A: {
+            int address = reg16(Reg16.BC);
+            write8(address, getReg(Reg.A));
         }
             break;
         case LD_DER_A: {
+            int address = reg16(Reg16.DE);
+            write8(address, getReg(Reg.A));
         }
             break;
         case LD_HLR_N8: {
+            write8AtHl(read8AfterOpcode());
         }
             break;
         case LD_N16R_SP: {
+            write16(read16AfterOpcode(),read16(SP));
         }
             break;
         case LD_R8_R8: {
+            Reg reg1 = extractReg(opcode, 3);
+            Reg reg2 = extractReg(opcode, 0);
+            if (reg1 != reg2) setReg(reg1,getReg(reg2));
         }
             break;
         case LD_SP_HL: {
+            SP = reg16(Reg16.HL);
         }
             break;
         case PUSH_R16: {
+            Reg16 reg = extractReg16(opcode);
+            push16(read8(reg16(reg)));
         }
             break;
         default:
             throw new IllegalArgumentException();
-
         }
         increment(opcode);
 
