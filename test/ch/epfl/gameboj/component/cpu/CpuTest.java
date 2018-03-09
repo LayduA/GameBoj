@@ -1,6 +1,6 @@
 package ch.epfl.gameboj.component.cpu;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +22,7 @@ class CpuTest {
         for (long c = 0; c < cycles; ++c)
             cpu.cycle(c);
     }
-    /*
+    
     @Test
     void nopDoesNothing() {
         Cpu c = new Cpu();
@@ -145,7 +145,7 @@ class CpuTest {
         assertArrayEquals(new int[] { 3, 0, 0xAB, 0, 0, 0, 0, 0, 0, 0 },
                 c._testGetPcSpAFBCDEHL());
     }
-    */
+  
     @Test
     void canGoThroughSP() {
         Cpu c = new Cpu();
@@ -166,8 +166,27 @@ class CpuTest {
         b.write(6, 0b11111001);
         //POP in BC
         b.write(7, 0b11000001);
-        cycleCpu(c, 10);
+        cycleCpu(c, Opcode.LD_H_N8.cycles+Opcode.LD_L_N8.cycles+Opcode.LD_HLR_N8.cycles+Opcode.LD_SP_HL.cycles+Opcode.POP_BC.cycles);
         assertArrayEquals(new int[] { 8, 0xABCD+ 2, 0, 0, 0, 0xCC, 0, 0, 0xAB, 0xCD },
                 c._testGetPcSpAFBCDEHL());
     }
+    @Test
+    void Load16ThroughSP() {
+        Cpu c = new Cpu();
+        Ram r = new Ram(0x10000);
+        Bus b = connect(c, r);
+        b.write(0, Opcode.LD_SP_N16.encoding);
+        b.write(1, 0xDE);
+        b.write(2, 0xFE);
+        b.write(3, Opcode.LD_DE_N16.encoding);
+        b.write(4, 0xEE);
+        b.write(5, 0xDD);
+        b.write(6, Opcode.PUSH_DE.encoding);
+        b.write(0xDDEE, 0x99);
+        cycleCpu(c, Opcode.LD_SP_N16.cycles + Opcode.PUSH_DE.cycles+Opcode.LD_DE_N16.cycles);
+        assertArrayEquals(new int[] { 7, 0xFEDE-2, 0, 0, 0, 0, 0xDD, 0xEE, 0, 0 },
+                c._testGetPcSpAFBCDEHL());
+        assertEquals(0x99,b.read(0xDDEE),b.read(0xFEDE-2));
+    }
+    
 }

@@ -11,25 +11,44 @@ import static ch.epfl.gameboj.Preconditions.*;
 import static ch.epfl.gameboj.bits.Bits.*;
 
 public final class Cpu implements Component, Clocked {
-
+    /**
+     * The next cycle during which the CPU will execute the next instruction.
+     */
     private long nextNonIdleCycle;
 
+    /**
+     * The bus to which the CPU is connected.
+     */
     private Bus bus;
 
+    //The two 16-bit registers (Stack Pointer and Program Counter)
     private int SP;
     private int PC;
 
+    /**
+     * The 8 registers of the CPU, each containing one byte.
+     * @see ch.epfl.gameboj.Register.java 
+     */
     private enum Reg implements Register {
         A, F, B, C, D, E, H, L
     }
-
+    
+    /*
+     * A File for our 8 single registers.
+     * @see ch.epfl.gameboj.RegisterFile.java
+     */
     private RegisterFile<Reg> bits8registerFile = new RegisterFile<>(
             Reg.values());
 
+    //To simplify our future tasks, we enumerate the pair of registers.
     private enum Reg16 implements Register {
         AF, BC, DE, HL
     }
 
+    /*
+     * @see ch.epfl.gameboj.component.Clocked#cycle(long)
+     */
+    @Override
     public void cycle(long cycle) {
         if (cycle < nextNonIdleCycle) {
             
@@ -39,19 +58,24 @@ public final class Cpu implements Component, Clocked {
         }
     }
 
+    /**
+     * Gets the opcode of the next instruction from the Program Counter, then executes it.
+     */
     private void dispatch() {
-
+        //Getting the opcode encoding
         int opcodeEncoding = bus.read(PC);
+        //Getting the opcode from its encoding
         Opcode opcode = DIRECT_OPCODE_TABLE[opcodeEncoding];
+        //Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
-            increment(opcode);
+             ;
         }
             break;
         case LD_R8_HLR: {
             Reg reg = extractReg(opcode, 3);
             setReg(reg, read8AtHl());
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_HLRU: {
@@ -60,130 +84,131 @@ public final class Cpu implements Component, Clocked {
             int newHl = clip(16,reg16(Reg16.HL)+c);
             setReg(Reg.L, clip(8, newHl));
             setReg(Reg.H, extract(newHl, 8, 8));
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_N8R: {
             setReg(Reg.A,read8(REGS_START+read8AfterOpcode()));
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_CR: {
             setReg(Reg.A,read8(REGS_START + getReg(Reg.C)));
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_N16R: {
             setReg(Reg.A,read8(read16AfterOpcode()));
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_BCR: {
             setReg(Reg.A, read8(reg16(Reg16.BC)));
-            increment(opcode);
+             ;
         }
             break;
         case LD_A_DER: {
             setReg(Reg.A, read8(reg16(Reg16.BC)));
-            increment(opcode);
+             ;
         }
             break;
         case LD_R8_N8: {
             Reg r = extractReg(opcode,3);
             setReg(r,read8AfterOpcode());
-            increment(opcode);
+             ;
         }
             break;
         case LD_R16SP_N16: {
             int newV = read16AfterOpcode();
             Reg16 reg = extractReg16(opcode);
             setReg16SP(reg,newV);
-            increment(opcode);
+             ;
         }
             break;
         case POP_R16: {
             Reg16 reg = extractReg16(opcode);
             setReg16(reg, pop16());
-            increment(opcode);
+             ;
         }
             break;
         case LD_HLR_R8: {
             Reg reg = extractReg(opcode,0);
             write8AtHl(getReg(reg));
-            increment(opcode);
+             ;
         }
             break;
         case LD_HLRU_A: {
             write8AtHl(getReg(Reg.A));
-            int c = extractHlIncrement(opcode);
+            int c = extractHlIncrement(opcode) ;
             int newHl = clip(16,reg16(Reg16.HL)+c);
             setReg(Reg.L, clip(8, newHl));
             setReg(Reg.H, extract(newHl, 8, 8));
-            increment(opcode);
+             ;
         }
             break;
         case LD_N8R_A: {
             int address = read8AfterOpcode() + REGS_START;
             write8(address, getReg(Reg.A));
-            increment(opcode);
+             ;
         }
             break;
         case LD_CR_A: {
             int address = getReg(Reg.C)+REGS_START;
             write8(address, getReg(Reg.A));
-            increment(opcode);
+             ;
         }
             break;
         case LD_N16R_A: {
             int address = read16AfterOpcode();
             write8(address,getReg(Reg.A));
-            increment(opcode);
+             ;
         }
             break;
         case LD_BCR_A: {
             int address = reg16(Reg16.BC);
             write8(address, getReg(Reg.A));
-            increment(opcode);
+             ;
         }
             break;
         case LD_DER_A: {
             int address = reg16(Reg16.DE);
             write8(address, getReg(Reg.A));
-            increment(opcode);
+             ;
         }
             break;
         case LD_HLR_N8: {
             write8AtHl(read8AfterOpcode());
-            increment(opcode);
+             ;
         }
             break;
         case LD_N16R_SP: {
             write16(read16AfterOpcode(),read16(SP));
-            increment(opcode);
+             ;
         }
             break;
         case LD_R8_R8: {
             Reg reg1 = extractReg(opcode, 3);
             Reg reg2 = extractReg(opcode, 0);
             if (reg1 != reg2) setReg(reg1,getReg(reg2));
-            increment(opcode);
+             ;
         }
             break;
         case LD_SP_HL: {
             
             SP = reg16(Reg16.HL);
-            increment(opcode);
+             ;
         }
             break;
         case PUSH_R16: {
             Reg16 reg = extractReg16(opcode);
             push16(read8(reg16(reg)));
-            increment(opcode);
+             ;
         }
             break;
         default:
             throw new IllegalArgumentException();
         }
+        increment(opcode);
 
     }
 
