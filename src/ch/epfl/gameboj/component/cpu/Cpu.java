@@ -224,27 +224,67 @@ public final class Cpu implements Component, Clocked {
             break;
         // Add
         case ADD_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = add(getReg(Reg.A), getReg(reg),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
+
         }
             break;
         case ADD_A_N8: {
+            int valueFlags = add(getReg(Reg.A), read8AfterOpcode(),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case ADD_A_HLR: {
+            int valueFlags = add(getReg(Reg.A), read8AtHl(),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case INC_R8: {
+            Reg reg = extractReg(opcode, 3);
+            int valueFlags = add(getReg(Reg.A), 1);
+            setRegFromAlu(reg, valueFlags);
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V0, FlagSrc.ALU,
+                    FlagSrc.CPU);
         }
             break;
         case INC_HLR: {
+            int valueFlags = add(read8AtHl(), 1);
+            write8AtHl(unpackValue(valueFlags));
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V0, FlagSrc.ALU,
+                    FlagSrc.CPU);
         }
             break;
         case INC_R16SP: {
+            Reg16 reg = extractReg16(opcode);
+            int value = add16H(reg16(reg), 1);
+            setReg16SP(reg, value);
+
         }
             break;
         case ADD_HL_R16SP: {
+            int valueToAdd = read16AfterOpcode();
+            int value16 = (extractReg16(opcode) == Reg16.AF ? SP
+                    : reg16(extractReg16(opcode)));
+            int valueFlags = add16H(valueToAdd, value16);
+            setReg16(Reg16.HL, unpackValue(valueFlags));
+            combineAluFlags(valueFlags, FlagSrc.CPU, FlagSrc.V0, FlagSrc.ALU,
+                    FlagSrc.ALU);
         }
             break;
         case LD_HLSP_S8: {
+            int valueFlags = add16L(((byte) read8AfterOpcode()), SP);
+            int value = unpackValue(valueFlags);
+            if (Bits.test(opcode.encoding, 4)) {
+                setReg16(Reg16.HL, value);
+            } else {
+                SP = value;
+            }
+            combineAluFlags(valueFlags, FlagSrc.V0, FlagSrc.V0, FlagSrc.ALU,
+                    FlagSrc.ALU);
         }
             break;
 
@@ -457,6 +497,18 @@ public final class Cpu implements Component, Clocked {
     }
 
     /**
+     * Extracts the initial carry (or borrow) to use in an instruction from its
+     * opcode and the current flags value.
+     * 
+     * @param opcode
+     *            : the opcode to test.
+     * @return true if the carry is 1, false otherwise.
+     */
+    private boolean extractInitialCarry(Opcode opcode) {
+        return test(opcode.encoding, 3) && test(getReg(Reg.F), Flag.C.index());
+    }
+
+    /**
      * Creates an array to test all registers' value
      * 
      * @return the value of all registers, stored in an array of integers.
@@ -564,6 +616,14 @@ public final class Cpu implements Component, Clocked {
         return make16(strongBits, weakBits);
     }
 
+    /**
+     * Sets a 16-bit register pair to a new value.
+     * 
+     * @param r
+     *            : the register pair to change.
+     * @param newV
+     *            : a 16-bit value to be stored in the register pair.
+     */
     private void setReg16(Reg16 r, int newV) {
         checkBits16(newV);
         int strongBits = extract(newV, 8, 8);
@@ -611,10 +671,11 @@ public final class Cpu implements Component, Clocked {
 
     private void combineAluFlags(int vf, FlagSrc z, FlagSrc n, FlagSrc h,
             FlagSrc c) {
-        boolean zBool = getBoolFromFlagSrc(vf, z, 7);
-        boolean nBool = getBoolFromFlagSrc(vf, n, 6);
-        boolean hBool = getBoolFromFlagSrc(vf, h, 5);
-        maskZNHC(z, n, h, c);
+        boolean zBool = getBoolFromFlagSrc(vf, z, Flag.Z.index());
+        boolean nBool = getBoolFromFlagSrc(vf, n, Flag.N.index());
+        boolean hBool = getBoolFromFlagSrc(vf, h, Flag.H.index());
+        boolean cBool = getBoolFromFlagSrc(vf, c, Flag.C.index());
+        setReg(Reg.F, maskZNHC(zBool, nBool, hBool, cBool));
     }
 
     private boolean getBoolFromFlagSrc(int vf, FlagSrc f, int index) {
@@ -625,9 +686,9 @@ public final class Cpu implements Component, Clocked {
             return true;
         case ALU:
             return Bits.test(vf, index);
-        case CPU :
+        case CPU:
             return Bits.test(getReg(Reg.F), index);
-        default :
+        default:
             return false;
         }
     }
