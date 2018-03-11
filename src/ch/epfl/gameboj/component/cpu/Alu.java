@@ -38,7 +38,11 @@ public final class Alu {
             mask = mask | Flag.C.mask();
         return mask;
     }
-
+    /**
+     * Returns the 16-bit value stored in a value-flags pair.
+     * @param valueFlags : the value-flags pair
+     * @return the value stored, in 16 bits.
+     */
     public static int unpackValue(int valueFlags) {
 
         return extract(valueFlags,8,16);

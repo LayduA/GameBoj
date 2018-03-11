@@ -4,7 +4,6 @@ import static ch.epfl.gameboj.Preconditions.*;
 
 import java.util.Objects;
 
-import ch.epfl.gameboj.Preconditions;
 
 public final class Bits {
 
@@ -18,11 +17,7 @@ public final class Bits {
 
     public static boolean test(int bits, int index) {
         checkIndex(index);
-        if ((bits & mask(index)) == 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return ((bits & mask(index)) != 0);
     }
 
     public static boolean test(int bits, Bit bit) {
