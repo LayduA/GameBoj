@@ -124,7 +124,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_A_DER: {
-            setReg(Reg.A, read8(reg16(Reg16.BC)));
+            setReg(Reg.A, read8(reg16(Reg16.DE)));
             ;
         }
             break;
@@ -198,7 +198,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_N16R_SP: {
-            write16(read16AfterOpcode(), read16(SP));
+            write16(read16AfterOpcode(), SP);
             ;
         }
             break;
@@ -218,7 +218,7 @@ public final class Cpu implements Component, Clocked {
             break;
         case PUSH_R16: {
             Reg16 reg = extractReg16(opcode);
-            push16(read8(reg16(reg)));
+            push16(reg16(reg));
             ;
         }
             break;
