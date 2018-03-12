@@ -276,7 +276,8 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_HLSP_S8: {
-            int valueFlags = add16L(((byte) read8AfterOpcode()), SP);
+            int valueFlags = add16L((clip(16, signExtend8(read8AfterOpcode()))),
+                    SP);
             int value = unpackValue(valueFlags);
             if (Bits.test(opcode.encoding, 4)) {
                 setReg16(Reg16.HL, value);
@@ -290,132 +291,257 @@ public final class Cpu implements Component, Clocked {
 
         // Subtract
         case SUB_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = sub(getReg(Reg.A), getReg(reg),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case SUB_A_N8: {
+            int valueFlags = sub(getReg(Reg.A), read8AfterOpcode(),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case SUB_A_HLR: {
+            int valueFlags = sub(getReg(Reg.A), read8AtHl(),
+                    extractInitialCarry(opcode));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case DEC_R8: {
+            Reg reg = extractReg(opcode, 3);
+            int valueFlags = sub(getReg(Reg.A), 1);
+            setRegFromAlu(reg, valueFlags);
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V1, FlagSrc.ALU,
+                    FlagSrc.CPU);
         }
             break;
         case DEC_HLR: {
+            int valueFlags = sub(read8AtHl(), 1);
+            write8AtHl(unpackValue(valueFlags));
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V1, FlagSrc.ALU,
+                    FlagSrc.CPU);
         }
             break;
         case CP_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = sub(getReg(Reg.A), getReg(reg));
+            setFlags(valueFlags);
         }
             break;
         case CP_A_N8: {
+            int valueFlags = sub(getReg(Reg.A), read8AfterOpcode());
+            setFlags(valueFlags);
         }
             break;
         case CP_A_HLR: {
+            int valueFlags = sub(getReg(Reg.A), read8AtHl());
+            setFlags(valueFlags);
         }
             break;
         case DEC_R16SP: {
+            Reg16 reg = extractReg16(opcode);
+            setReg16SP(reg, clip(16, reg16(reg) - 1));
         }
             break;
 
         // And, or, xor, complement
         case AND_A_N8: {
+            int valueFlags = and(getReg(Reg.A), read8AfterOpcode());
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case AND_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = and(getReg(Reg.A), getReg(reg));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case AND_A_HLR: {
+            int valueFlags = and(getReg(Reg.A), read8AtHl());
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case OR_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = or(getReg(Reg.A), getReg(reg));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case OR_A_N8: {
+            int valueFlags = or(getReg(Reg.A), read8AfterOpcode());
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case OR_A_HLR: {
+            int valueFlags = or(getReg(Reg.A), read8AtHl());
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case XOR_A_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = xor(getReg(Reg.A), getReg(reg));
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case XOR_A_N8: {
+            int valueFlags = xor(getReg(Reg.A), read8AfterOpcode());
+            setRegFlags(Reg.A, valueFlags);
         }
             break;
         case XOR_A_HLR: {
+            int valueFlags = xor(getReg(Reg.A), read8AtHl());
+            setRegFlags(Reg.A, valueFlags);
         }
-            break;
         case CPL: {
+            int value = complement8(getReg(Reg.A));
+            setReg(Reg.A, value);
+            combineAluFlags(0, FlagSrc.CPU, FlagSrc.V1, FlagSrc.V1,
+                    FlagSrc.CPU);
         }
             break;
 
         // Rotate, shift
         case ROTCA: {
+            RotDir rotdir = extractRotDir(opcode);
+            int valueFlags = Alu.rotate(rotdir, getReg(Reg.A));
+            setRegFromAlu(Reg.A, valueFlags);
+            combineAluFlags(valueFlags, FlagSrc.V0, FlagSrc.V0, FlagSrc.V0,
+                    FlagSrc.ALU);
         }
             break;
         case ROTA: {
+            RotDir rotdir = extractRotDir(opcode);
+            int valueFlags = Alu.rotate(rotdir, getReg(Reg.A),
+                    test(getReg(Reg.F), Flag.C.index()));
+            setRegFromAlu(Reg.A, valueFlags);
+            combineAluFlags(valueFlags, FlagSrc.V0, FlagSrc.V0, FlagSrc.V0,
+                    FlagSrc.ALU);
         }
             break;
         case ROTC_R8: {
+            RotDir rotdir = extractRotDir(opcode);
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = Alu.rotate(rotdir, getReg(reg));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case ROT_R8: {
+            RotDir rotdir = extractRotDir(opcode);
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = Alu.rotate(rotdir, getReg(reg),
+                    test(getReg(Reg.F), Flag.C.index()));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case ROTC_HLR: {
+            RotDir rotdir = extractRotDir(opcode);
+            int valueFlags = Alu.rotate(rotdir, read8AtHl());
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
         case ROT_HLR: {
+            RotDir rotdir = extractRotDir(opcode);
+            int valueFlags = Alu.rotate(rotdir, read8AtHl(),
+                    test(getReg(Reg.F), Flag.C.index()));
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
         case SWAP_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = swap(getReg(reg));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case SWAP_HLR: {
+            int valueFlags = swap(read8AtHl());
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
         case SLA_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = shiftLeft(getReg(reg));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case SRA_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = shiftRightA(getReg(reg));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case SRL_R8: {
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = shiftRightL(getReg(reg));
+            setRegFlags(reg, valueFlags);
         }
             break;
         case SLA_HLR: {
+            int valueFlags = shiftLeft(read8AtHl());
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
         case SRA_HLR: {
+            int valueFlags = shiftRightA(read8AtHl());
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
         case SRL_HLR: {
+            int valueFlags = shiftRightL(read8AtHl());
+            write8AtHlAndSetFlags(valueFlags);
         }
             break;
 
         // Bit test and set
         case BIT_U3_R8: {
+            int bitIndex = extractBitIndex(opcode);
+            Reg reg = extractReg(opcode, 0);
+            int valueFlags = testBit(getReg(reg), bitIndex);
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V0, FlagSrc.V1,
+                    FlagSrc.CPU);
         }
             break;
         case BIT_U3_HLR: {
+            int bitIndex = extractBitIndex(opcode);
+            int valueFlags = testBit(read8AtHl(), bitIndex);
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V0, FlagSrc.V1,
+                    FlagSrc.CPU);
         }
             break;
         case CHG_U3_R8: {
+            int bitIndex = extractBitIndex(opcode);
+            boolean newValue = extractBitValue(opcode);
+            Reg reg = extractReg(opcode, 0);
+            int value = Bits.set(getReg(reg), bitIndex, newValue);
+            setReg(reg, value);
         }
             break;
         case CHG_U3_HLR: {
+            int bitIndex = extractBitIndex(opcode);
+            boolean newValue = extractBitValue(opcode);
+            int value = Bits.set(read8AtHl(), bitIndex, newValue);
+            write8AtHl(value);
         }
             break;
 
         // Misc. ALU
         case DAA: {
+            int valueA = getReg(Reg.A);
+            int valueFlags = bcdAdjust(valueA, test(getReg(Reg.F), Flag.N.index()),
+                    test(getReg(Reg.F), Flag.H.index()),
+                    test(getReg(Reg.F), Flag.C.index()));
+            setReg(Reg.A,valueFlags);
+            combineAluFlags(valueFlags,FlagSrc.ALU,FlagSrc.CPU,FlagSrc.V0,FlagSrc.ALU);
         }
             break;
         case SCCF: {
+            boolean newValueC = !(test(opcode.encoding, 3)&&test(getReg(Reg.F),Flag.C.index()));
+            int valueF = getReg(Reg.F);
+            valueF = set(valueF, Flag.C.index(), newValueC);
+            setReg(Reg.F,valueF);
         }
             break;
-        default:
-            throw new IllegalArgumentException();
         }
         increment(opcode);
 
@@ -506,6 +632,35 @@ public final class Cpu implements Component, Clocked {
      */
     private boolean extractInitialCarry(Opcode opcode) {
         return test(opcode.encoding, 3) && test(getReg(Reg.F), Flag.C.index());
+    }
+
+    /**
+     * Extracts the rotation direction of the encoding of an opcode
+     * 
+     * @param opcode
+     *            : the opcode to test.
+     * @return : the rotation direction
+     */
+    private RotDir extractRotDir(Opcode opcode) {
+        if (test(opcode.encoding, 3)) {
+            return RotDir.RIGHT;
+        }
+        return RotDir.LEFT;
+    }
+
+    /**
+     * Extracts an encoded bit index from an opcode.
+     * 
+     * @param opcode
+     *            : the opcode from which to test.
+     * @return the bit Index (from 0 to 7)
+     */
+    private int extractBitIndex(Opcode opcode) {
+        return extract(opcode.encoding, 3, 3);
+    }
+
+    private boolean extractBitValue(Opcode opcode) {
+        return (test(opcode.encoding, 6));
     }
 
     /**
