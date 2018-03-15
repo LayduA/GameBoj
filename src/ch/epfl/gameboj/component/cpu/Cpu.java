@@ -245,7 +245,7 @@ public final class Cpu implements Component, Clocked {
             break;
         case INC_R8: {
             Reg reg = extractReg(opcode, 3);
-            int valueFlags = add(getReg(Reg.A), 1);
+            int valueFlags = add(getReg(reg), 1);
             setRegFromAlu(reg, valueFlags);
             combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V0, FlagSrc.ALU,
                     FlagSrc.CPU);
@@ -391,9 +391,10 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case XOR_A_HLR: {
-            int valueFlags = xor(getReg(Reg.A), read8AtHl());
+            int valueFlags = xor(getReg(Reg.A), read8AtHl());            
             setRegFlags(Reg.A, valueFlags);
-        }
+            }
+            break;
         case CPL: {
             int value = complement8(getReg(Reg.A));
             setReg(Reg.A, value);
