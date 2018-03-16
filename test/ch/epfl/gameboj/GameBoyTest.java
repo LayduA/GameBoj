@@ -9,9 +9,13 @@ import org.junit.jupiter.api.Test;
 class GameBoyTest {
     @Test
     void workRamIsProperlyMapped() {
-        Bus b = new GameBoy(null).bus();
+        GameBoy g = new GameBoy(null);
+        Bus b = g.bus();
+        g.cpu().attachTo(b);
+        
         for (int a = 0; a <= 0xFFFF; ++a) {
             boolean inWorkRamOrEcho = (0xC000 <= a && a < 0xFE00);
+            System.out.println(a);
             assertEquals(inWorkRamOrEcho ? 0 : 0xFF, b.read(a), String.format("at address 0x%04x", a));
         }
     }

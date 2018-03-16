@@ -1,10 +1,12 @@
 package ch.epfl.gameboj.component.cpu;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
 import ch.epfl.gameboj.Bus;
+import ch.epfl.gameboj.bits.Bits;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
 
@@ -98,25 +100,6 @@ class CpuTest {
         b.write(0xCACB, 0xBB);
         cycleCpu(c, 6);
         assertArrayEquals(new int[] { 5, 0, 0xBB, 0, 0, 0, 0, 0, 0xCA, 0xCA },
-                c._testGetPcSpAFBCDEHL());
-    }
-
-    @Test
-    void overflowIsNotAProblem() {
-        Cpu c = new Cpu();
-        Ram r = new Ram(0x10000);
-        Bus b = connect(c, r);
-        // Loads in H
-        b.write(0, 0b00100110);
-        b.write(1, 0xFF);
-        // Loads in L
-        b.write(2, 0b00101110);
-        b.write(3, 0xFF);
-
-        b.write(4, 0b00101010);
-        b.write(0xFFFF, 0xAA);
-        cycleCpu(c, 6);
-        assertArrayEquals(new int[] { 5, 0, 0xAA, 0, 0, 0, 0, 0, 0, 0 },
                 c._testGetPcSpAFBCDEHL());
     }
 
@@ -602,11 +585,36 @@ class CpuTest {
         bus.write(4, 0xCB);
         bus.write(5, Opcode.SLA_HLR.encoding);
         cycleCpu(c, 6);
-        assertArrayEquals(
-                new int[] { 6, 0, 0, 0b00010000, 0, 0, 0, 0, 0, 20 },
+        assertArrayEquals(new int[] { 6, 0, 0, 0b00010000, 0, 0, 0, 0, 0, 20 },
                 c._testGetPcSpAFBCDEHL());
-        assertEquals(0b00011010,bus.read(20));
+        assertEquals(0b00011010, bus.read(20));
 
+    }
+    
+    @Test
+    void Fibonacci() {
+        Cpu c = new Cpu();
+        Ram r = new Ram(10000);
+        Bus bus = connect(c, r);
+        byte[] instructions = new byte[] { (byte) 0x31, (byte) 0xFF,
+                (byte) 0xFF, (byte) 0x3E, (byte) 0x0B, (byte) 0xCD, (byte) 0x0A,
+                (byte) 0x00, (byte) 0x76, (byte) 0x00, (byte) 0xFE, (byte) 0x02,
+                (byte) 0xD8, (byte) 0xC5, (byte) 0x3D, (byte) 0x47, (byte) 0xCD,
+                (byte) 0x0A, (byte) 0x00, (byte) 0x4F, (byte) 0x78, (byte) 0x3D,
+                (byte) 0xCD, (byte) 0x0A, (byte) 0x00, (byte) 0x81, (byte) 0xC1,
+                (byte) 0xC9, };
+        int[] intstructions = new int[instructions.length]; 
+        for(int i = 0; i<instructions.length;i++) {
+            intstructions[i] = Byte.toUnsignedInt(instructions[i]);
+            bus.write(i, intstructions[i]);
+        }
+        int i = 0;
+        while(c._testGetPcSpAFBCDEHL()[0]!=8) {
+            c.cycle(i);
+            i++;
+        }
+        assertArrayEquals(new int[] { 8, 0xFFFF, 89, 0, 0, 0, 0, 0, 0, 0 },
+                c._testGetPcSpAFBCDEHL());
     }
 
 }

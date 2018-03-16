@@ -1,11 +1,15 @@
 package ch.epfl.gameboj;
 
+import ch.epfl.gameboj.component.cpu.Cpu;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
 
 public class GameBoy implements AddressMap{
   
     private Bus bus;
+    private Cpu cpu;
+    
+    private int cycles;
     
     public GameBoy(Object cartridge) {
        
@@ -19,12 +23,16 @@ public class GameBoy implements AddressMap{
         RamController ramController = new RamController(ram,WORK_RAM_START);
         RamController echoRamController = new RamController(echoRam,ECHO_RAM_START,ECHO_RAM_END);
         
+        cpu = new Cpu();
+        
         //Initializing the bus.
         bus = new Bus();
         
         //Attaching our two controllers.
         bus.attach(ramController);
         bus.attach(echoRamController);
+        
+        bus.attach(cpu);
         
     }
     
@@ -34,5 +42,23 @@ public class GameBoy implements AddressMap{
      */
     public Bus bus() {
         return bus;
+    }
+    
+    public Cpu cpu() {
+        return cpu;
+    }
+    
+    public int cycles() {
+        return cycles;
+    }
+    
+    public void runUntil(long cycle) {
+        if (cycles > cycle) {
+            throw new IllegalArgumentException();
+        }
+        for(int i = cycles; i<cycle;i++) {
+            cpu.cycle(i);
+            cycles+=1;
+        }
     }
 }

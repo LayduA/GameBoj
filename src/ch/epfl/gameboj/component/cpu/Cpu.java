@@ -103,7 +103,9 @@ public final class Cpu implements Component, Clocked {
     }
 
     public void reallyCycle(long cycle) {
+        
         if (IME && interruptionWaiting()) {
+            System.out.print("jaj");
             nextNonIdleCycle+=5;
             IME = false;
             int index = getInterruption();
@@ -133,7 +135,7 @@ public final class Cpu implements Component, Clocked {
      * executes it.
      */
     private void dispatch(Opcode opcode) {
-
+        int nextPC = PC+opcode.totalBytes;
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
@@ -605,7 +607,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case JP_N16: {
-            PC = read16AfterOpcode();
+            PC = read16AfterOpcode()-opcode.totalBytes;
         }
             break;
         case JP_CC_N16: {
@@ -616,48 +618,46 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case JR_E8: {
-            int PCprime = PC + opcode.totalBytes;
             int value = clip(8, signExtend8(read8AfterOpcode()));
-            PC = PCprime + value;
+            PC += value;
         }
             break;
         case JR_CC_E8: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                int PCprime = PC + opcode.totalBytes;
                 int value = clip(8, signExtend8(read8AfterOpcode()));
-                PC = PCprime + value;
+                PC += value;
             }
         }
             break;
 
         // Calls and returns
         case CALL_N16: {
-            push16(PC + opcode.totalBytes);
-            PC = read16AfterOpcode();
+            push16(nextPC);
+            PC = read16AfterOpcode()-opcode.totalBytes;
         }
             break;
         case CALL_CC_N16: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                push16(PC + opcode.totalBytes);
-                PC = read16AfterOpcode();
+                push16(nextPC);
+                PC = read16AfterOpcode()-opcode.totalBytes;
             }
         }
             break;
         case RST_U3: {
-            push16(PC + opcode.totalBytes);
-            PC = AddressMap.RESETS[extractBitIndex(opcode)];
+            push16(nextPC);
+            PC = AddressMap.RESETS[extractBitIndex(opcode)]-opcode.totalBytes;
         }
             break;
         case RET: {
-            PC = pop16();
+            PC = pop16()-opcode.totalBytes;
         }
             break;
         case RET_CC: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                PC = pop16();
+                PC = pop16()-opcode.totalBytes;
             }
         }
             break;
