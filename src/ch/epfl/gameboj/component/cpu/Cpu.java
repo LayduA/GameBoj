@@ -53,6 +53,9 @@ public final class Cpu implements Component, Clocked {
     private int SP;
     private int PC;
 
+    private int IE;
+    private int IF;
+
     private boolean IME;
 
     private Ram highRam = new Ram(AddressMap.HIGH_RAM_SIZE);
@@ -92,7 +95,7 @@ public final class Cpu implements Component, Clocked {
     }
 
     public void cycle(long cycle) {
-        if(nextNonIdleCycle == Long.MAX_VALUE && interruptionWaiting()) {
+        if (nextNonIdleCycle == Long.MAX_VALUE && interruptionWaiting()) {
             nextNonIdleCycle = cycle;
             reallyCycle(nextNonIdleCycle);
             return;
@@ -103,17 +106,16 @@ public final class Cpu implements Component, Clocked {
     }
 
     public void reallyCycle(long cycle) {
-        
+
         if (IME && interruptionWaiting()) {
             System.out.print("jaj");
-            nextNonIdleCycle+=5;
+            nextNonIdleCycle += 5;
             IME = false;
             int index = getInterruption();
             bus.write(AddressMap.REG_IF,
                     set(bus.read(AddressMap.REG_IF), index, false));
             push16(PC);
             PC = AddressMap.INTERRUPTS[index];
-            
 
         } else {
             Opcode opcode;
@@ -135,7 +137,8 @@ public final class Cpu implements Component, Clocked {
      * executes it.
      */
     private void dispatch(Opcode opcode) {
-        int nextPC = PC+opcode.totalBytes;
+        int nextPC = PC + opcode.totalBytes;
+        System.out.println(opcode);
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
@@ -607,7 +610,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case JP_N16: {
-            PC = read16AfterOpcode()-opcode.totalBytes;
+            PC = read16AfterOpcode() - opcode.totalBytes;
         }
             break;
         case JP_CC_N16: {
@@ -634,30 +637,30 @@ public final class Cpu implements Component, Clocked {
         // Calls and returns
         case CALL_N16: {
             push16(nextPC);
-            PC = read16AfterOpcode()-opcode.totalBytes;
+            PC = read16AfterOpcode() - opcode.totalBytes;
         }
             break;
         case CALL_CC_N16: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
                 push16(nextPC);
-                PC = read16AfterOpcode()-opcode.totalBytes;
+                PC = read16AfterOpcode() - opcode.totalBytes;
             }
         }
             break;
         case RST_U3: {
             push16(nextPC);
-            PC = AddressMap.RESETS[extractBitIndex(opcode)]-opcode.totalBytes;
+            PC = AddressMap.RESETS[extractBitIndex(opcode)] - opcode.totalBytes;
         }
             break;
         case RET: {
-            PC = pop16()-opcode.totalBytes;
+            PC = pop16() - opcode.totalBytes;
         }
             break;
         case RET_CC: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                PC = pop16()-opcode.totalBytes;
+                PC = pop16() - opcode.totalBytes;
             }
         }
             break;
@@ -999,15 +1002,11 @@ public final class Cpu implements Component, Clocked {
     }
 
     private boolean interruptionWaiting() {
-        int ieReg = bus.read(AddressMap.REG_IE);
-        int ifReg = bus.read(AddressMap.REG_IF);
-        return (ieReg & ifReg) != 0;
+        return (IE & IF) != 0;
     }
 
     private int getInterruption() {
-        int ieReg = bus.read(AddressMap.REG_IE);
-        int ifReg = bus.read(AddressMap.REG_IF);
-        int temp = (ieReg & ifReg);
+        int temp = IE & IF;
         int index = Integer.lowestOneBit(temp);
         return index;
     }
@@ -1020,9 +1019,10 @@ public final class Cpu implements Component, Clocked {
 
     public int read(int address) {
         checkBits16(address);
-        if (address == AddressMap.REG_IE || address == AddressMap.REG_IF) {
-            return bus.read(address);
-        }
+        if (address == AddressMap.REG_IE)
+            return IE;
+        if (address == AddressMap.REG_IF)
+            return IF;
         if (address >= AddressMap.HIGH_RAM_START
                 && address < AddressMap.HIGH_RAM_END) {
             return highRam.read(address - AddressMap.HIGH_RAM_START);
@@ -1033,8 +1033,11 @@ public final class Cpu implements Component, Clocked {
     public void write(int address, int data) {
         checkBits16(address);
         checkBits8(data);
-        if (address == AddressMap.REG_IE || address == AddressMap.REG_IF) {
-            bus.write(address, data);
+        if (address == AddressMap.REG_IE) {
+            IE = data;
+        }
+        if (address == AddressMap.REG_IF) {
+            IF = data;
         }
         if (address >= AddressMap.HIGH_RAM_START
                 && address < AddressMap.HIGH_RAM_END) {

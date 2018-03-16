@@ -32,7 +32,7 @@ public class GameBoy implements AddressMap{
         bus.attach(ramController);
         bus.attach(echoRamController);
         
-        bus.attach(cpu);
+        cpu.attachTo(bus);
         
     }
     
