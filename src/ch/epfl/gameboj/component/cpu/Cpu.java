@@ -1,15 +1,42 @@
 package ch.epfl.gameboj.component.cpu;
 
+import static ch.epfl.gameboj.AddressMap.REGS_START;
+import static ch.epfl.gameboj.Preconditions.*;
+import static ch.epfl.gameboj.bits.Bits.clip;
+import static ch.epfl.gameboj.bits.Bits.complement8;
+import static ch.epfl.gameboj.bits.Bits.extract;
+import static ch.epfl.gameboj.bits.Bits.make16;
+import static ch.epfl.gameboj.bits.Bits.set;
+import static ch.epfl.gameboj.bits.Bits.signExtend8;
+import static ch.epfl.gameboj.bits.Bits.test;
+import static ch.epfl.gameboj.component.cpu.Alu.add;
+import static ch.epfl.gameboj.component.cpu.Alu.add16H;
+import static ch.epfl.gameboj.component.cpu.Alu.add16L;
+import static ch.epfl.gameboj.component.cpu.Alu.and;
+import static ch.epfl.gameboj.component.cpu.Alu.bcdAdjust;
+import static ch.epfl.gameboj.component.cpu.Alu.maskZNHC;
+import static ch.epfl.gameboj.component.cpu.Alu.or;
+import static ch.epfl.gameboj.component.cpu.Alu.shiftLeft;
+import static ch.epfl.gameboj.component.cpu.Alu.shiftRightA;
+import static ch.epfl.gameboj.component.cpu.Alu.shiftRightL;
+import static ch.epfl.gameboj.component.cpu.Alu.sub;
+import static ch.epfl.gameboj.component.cpu.Alu.swap;
+import static ch.epfl.gameboj.component.cpu.Alu.testBit;
+import static ch.epfl.gameboj.component.cpu.Alu.unpackFlags;
+import static ch.epfl.gameboj.component.cpu.Alu.unpackValue;
+import static ch.epfl.gameboj.component.cpu.Alu.xor;
+
+import ch.epfl.gameboj.AddressMap;
 import ch.epfl.gameboj.Bus;
 import ch.epfl.gameboj.Register;
 import ch.epfl.gameboj.RegisterFile;
+import ch.epfl.gameboj.bits.Bit;
 import ch.epfl.gameboj.bits.Bits;
 import ch.epfl.gameboj.component.Clocked;
 import ch.epfl.gameboj.component.Component;
-import static ch.epfl.gameboj.AddressMap.*;
-import static ch.epfl.gameboj.Preconditions.*;
-import static ch.epfl.gameboj.bits.Bits.*;
-import static ch.epfl.gameboj.component.cpu.Alu.*;
+import ch.epfl.gameboj.component.cpu.Alu.Flag;
+import ch.epfl.gameboj.component.cpu.Alu.RotDir;
+import ch.epfl.gameboj.component.memory.Ram;
 
 public final class Cpu implements Component, Clocked {
     /**
@@ -25,6 +52,10 @@ public final class Cpu implements Component, Clocked {
     // The two 16-bit registers (Stack Pointer and Program Counter)
     private int SP;
     private int PC;
+
+    private boolean IME;
+
+    private Ram highRam = new Ram(AddressMap.HIGH_RAM_SIZE);
 
     /**
      * The 8 registers of the CPU, each containing one byte.
@@ -44,6 +75,7 @@ public final class Cpu implements Component, Clocked {
             Reg.values());
 
     // To simplify our future tasks, we enumerate the pair of registers.
+
     private enum Reg16 implements Register {
         AF, BC, DE, HL
     }
@@ -53,14 +85,34 @@ public final class Cpu implements Component, Clocked {
         V0, V1, ALU, CPU
     }
 
-    /*
-     * @see ch.epfl.gameboj.component.Clocked#cycle(long)
-     */
-    @Override
-    public void cycle(long cycle) {
-        if (cycle < nextNonIdleCycle) {
+    // Enumeration used to represent the interruption under the form of a 5-bit
+    // number.
+    public enum Interrupt implements Bit {
+        VBLANK, LCD_STAT, TIMER, SERIAL, JOYPAD
+    }
 
+    public void cycle(long cycle) {
+        if(nextNonIdleCycle == Long.MAX_VALUE && interruptionWaiting()) {
+            nextNonIdleCycle = cycle;
+            reallyCycle(nextNonIdleCycle);
             return;
+        }
+        if (cycle < nextNonIdleCycle)
+            return;
+        reallyCycle(cycle);
+    }
+
+    public void reallyCycle(long cycle) {
+        if (IME && interruptionWaiting()) {
+            nextNonIdleCycle+=5;
+            IME = false;
+            int index = getInterruption();
+            bus.write(AddressMap.REG_IF,
+                    set(bus.read(AddressMap.REG_IF), index, false));
+            push16(PC);
+            PC = AddressMap.INTERRUPTS[index];
+            
+
         } else {
             Opcode opcode;
             // Getting the opcode encoding (or the prefix 0xCB)
@@ -391,9 +443,9 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case XOR_A_HLR: {
-            int valueFlags = xor(getReg(Reg.A), read8AtHl());            
+            int valueFlags = xor(getReg(Reg.A), read8AtHl());
             setRegFlags(Reg.A, valueFlags);
-            }
+        }
             break;
         case CPL: {
             int value = complement8(getReg(Reg.A));
@@ -529,20 +581,105 @@ public final class Cpu implements Component, Clocked {
         // Misc. ALU
         case DAA: {
             int valueA = getReg(Reg.A);
-            int valueFlags = bcdAdjust(valueA, test(getReg(Reg.F), Flag.N.index()),
+            int valueFlags = bcdAdjust(valueA,
+                    test(getReg(Reg.F), Flag.N.index()),
                     test(getReg(Reg.F), Flag.H.index()),
                     test(getReg(Reg.F), Flag.C.index()));
-            setReg(Reg.A,valueFlags);
-            combineAluFlags(valueFlags,FlagSrc.ALU,FlagSrc.CPU,FlagSrc.V0,FlagSrc.ALU);
+            setReg(Reg.A, valueFlags);
+            combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.CPU, FlagSrc.V0,
+                    FlagSrc.ALU);
         }
             break;
         case SCCF: {
-            boolean newValueC = !(test(opcode.encoding, 3)&&test(getReg(Reg.F),Flag.C.index()));
+            boolean newValueC = !(test(opcode.encoding, 3)
+                    && test(getReg(Reg.F), Flag.C.index()));
             int valueF = getReg(Reg.F);
             valueF = set(valueF, Flag.C.index(), newValueC);
-            setReg(Reg.F,valueF);
+            setReg(Reg.F, valueF);
         }
             break;
+
+        // Jumps
+        case JP_HL: {
+            PC = reg16(Reg16.HL);
+        }
+            break;
+        case JP_N16: {
+            PC = read16AfterOpcode();
+        }
+            break;
+        case JP_CC_N16: {
+            if (extractCondition(opcode)) {
+                nextNonIdleCycle += opcode.additionalCycles;
+                PC = read16AfterOpcode();
+            }
+        }
+            break;
+        case JR_E8: {
+            int PCprime = PC + opcode.totalBytes;
+            int value = clip(8, signExtend8(read8AfterOpcode()));
+            PC = PCprime + value;
+        }
+            break;
+        case JR_CC_E8: {
+            if (extractCondition(opcode)) {
+                nextNonIdleCycle += opcode.additionalCycles;
+                int PCprime = PC + opcode.totalBytes;
+                int value = clip(8, signExtend8(read8AfterOpcode()));
+                PC = PCprime + value;
+            }
+        }
+            break;
+
+        // Calls and returns
+        case CALL_N16: {
+            push16(PC + opcode.totalBytes);
+            PC = read16AfterOpcode();
+        }
+            break;
+        case CALL_CC_N16: {
+            if (extractCondition(opcode)) {
+                nextNonIdleCycle += opcode.additionalCycles;
+                push16(PC + opcode.totalBytes);
+                PC = read16AfterOpcode();
+            }
+        }
+            break;
+        case RST_U3: {
+            push16(PC + opcode.totalBytes);
+            PC = AddressMap.RESETS[extractBitIndex(opcode)];
+        }
+            break;
+        case RET: {
+            PC = pop16();
+        }
+            break;
+        case RET_CC: {
+            if (extractCondition(opcode)) {
+                nextNonIdleCycle += opcode.additionalCycles;
+                PC = pop16();
+            }
+        }
+            break;
+
+        // Interrupts
+        case EDI: {
+            IME = Bits.test(opcode.encoding, 3);
+        }
+            break;
+        case RETI: {
+            IME = true;
+            PC = pop16();
+        }
+            break;
+
+        // Misc control
+        case HALT: {
+            nextNonIdleCycle = Long.MAX_VALUE;
+        }
+            break;
+        case STOP:
+            throw new Error("STOP is not implemented");
         }
         increment(opcode);
 
@@ -662,6 +799,18 @@ public final class Cpu implements Component, Clocked {
 
     private boolean extractBitValue(Opcode opcode) {
         return (test(opcode.encoding, 6));
+    }
+
+    private boolean extractCondition(Opcode opcode) {
+        int condition = extract(opcode.encoding, 3, 2);
+        boolean firstBit = Bits.test(condition, 1);
+        boolean secondBit = Bits.test(condition, 0);
+        boolean zBit = Bits.test(getReg(Reg.F), Flag.Z.index());
+        boolean cBit = Bits.test(getReg(Reg.F), Flag.C.index());
+        if (!firstBit) {
+            return (zBit && secondBit) || (!zBit && !secondBit);
+        }
+        return (cBit && secondBit) || (!cBit && !secondBit);
     }
 
     /**
@@ -849,16 +998,48 @@ public final class Cpu implements Component, Clocked {
         }
     }
 
+    private boolean interruptionWaiting() {
+        int ieReg = bus.read(AddressMap.REG_IE);
+        int ifReg = bus.read(AddressMap.REG_IF);
+        return (ieReg & ifReg) != 0;
+    }
+
+    private int getInterruption() {
+        int ieReg = bus.read(AddressMap.REG_IE);
+        int ifReg = bus.read(AddressMap.REG_IF);
+        int temp = (ieReg & ifReg);
+        int index = Integer.lowestOneBit(temp);
+        return index;
+    }
+
     @Override
     public void attachTo(Bus bus) {
         this.bus = bus;
+        bus.attach(this);
     }
 
     public int read(int address) {
+        checkBits16(address);
+        if (address == AddressMap.REG_IE || address == AddressMap.REG_IF) {
+            return bus.read(address);
+        }
+        if (address >= AddressMap.HIGH_RAM_START
+                && address < AddressMap.HIGH_RAM_END) {
+            return highRam.read(address - AddressMap.HIGH_RAM_START);
+        }
         return NO_DATA;
     }
 
     public void write(int address, int data) {
+        checkBits16(address);
+        checkBits8(data);
+        if (address == AddressMap.REG_IE || address == AddressMap.REG_IF) {
+            bus.write(address, data);
+        }
+        if (address >= AddressMap.HIGH_RAM_START
+                && address < AddressMap.HIGH_RAM_END) {
+            highRam.write(address - AddressMap.HIGH_RAM_START, data);
+        }
     }
 
 }
