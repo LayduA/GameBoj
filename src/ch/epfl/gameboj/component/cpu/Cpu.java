@@ -53,6 +53,7 @@ public final class Cpu implements Component, Clocked {
     private int SP;
     private int PC;
 
+    // The two 5-bit registers handling interruptions.
     private int IE;
     private int IF;
 
@@ -108,7 +109,6 @@ public final class Cpu implements Component, Clocked {
     public void reallyCycle(long cycle) {
 
         if (IME && interruptionWaiting()) {
-            System.out.print("jaj");
             nextNonIdleCycle += 5;
             IME = false;
             int index = getInterruption();
@@ -138,7 +138,6 @@ public final class Cpu implements Component, Clocked {
      */
     private void dispatch(Opcode opcode) {
         int nextPC = PC + opcode.totalBytes;
-        System.out.println(opcode);
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
@@ -317,16 +316,15 @@ public final class Cpu implements Component, Clocked {
             break;
         case INC_R16SP: {
             Reg16 reg = extractReg16(opcode);
-            int value = add16H(reg16(reg), 1);
-            setReg16SP(reg, value);
+            int valueFlags = add16H((reg == Reg16.AF ? SP : reg16(reg)), 1);
+            setReg16SP(reg, unpackValue(valueFlags));
 
         }
             break;
         case ADD_HL_R16SP: {
-            int valueToAdd = read16AfterOpcode();
             int value16 = (extractReg16(opcode) == Reg16.AF ? SP
                     : reg16(extractReg16(opcode)));
-            int valueFlags = add16H(valueToAdd, value16);
+            int valueFlags = add16H(reg16(Reg16.HL), value16);
             setReg16(Reg16.HL, unpackValue(valueFlags));
             combineAluFlags(valueFlags, FlagSrc.CPU, FlagSrc.V0, FlagSrc.ALU,
                     FlagSrc.ALU);
@@ -590,7 +588,7 @@ public final class Cpu implements Component, Clocked {
                     test(getReg(Reg.F), Flag.N.index()),
                     test(getReg(Reg.F), Flag.H.index()),
                     test(getReg(Reg.F), Flag.C.index()));
-            setReg(Reg.A, valueFlags);
+            setReg(Reg.A, unpackValue(valueFlags));
             combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.CPU, FlagSrc.V0,
                     FlagSrc.ALU);
         }
@@ -600,7 +598,7 @@ public final class Cpu implements Component, Clocked {
                     && test(getReg(Reg.F), Flag.C.index()));
             int valueF = getReg(Reg.F);
             valueF = set(valueF, Flag.C.index(), newValueC);
-            setReg(Reg.F, valueF);
+            combineAluFlags(valueF, FlagSrc.CPU, FlagSrc.V0, FlagSrc.V0, FlagSrc.ALU);
         }
             break;
 
@@ -1017,6 +1015,7 @@ public final class Cpu implements Component, Clocked {
         bus.attach(this);
     }
 
+    @Override
     public int read(int address) {
         checkBits16(address);
         if (address == AddressMap.REG_IE)
@@ -1030,6 +1029,7 @@ public final class Cpu implements Component, Clocked {
         return NO_DATA;
     }
 
+    @Override
     public void write(int address, int data) {
         checkBits16(address);
         checkBits8(data);
