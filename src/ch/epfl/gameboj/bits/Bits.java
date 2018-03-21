@@ -45,9 +45,9 @@ public final class Bits {
      */
     public static int clip(int size, int bits) {
         checkArgument(size <= 32 && size >= 0);
-        bits = bits << (32 - size);
-        bits = bits >>> (32 - size);
-        return (size == 0 ? 0 : bits);
+        if(size == 32 ) return bits;
+        bits = set(bits, 31, false);
+        return (bits%(1<<size));
     }
 
     public static int rotate(int size, int bits, int distance) {

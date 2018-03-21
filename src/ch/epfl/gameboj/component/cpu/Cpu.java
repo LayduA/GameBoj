@@ -670,7 +670,7 @@ public final class Cpu implements Component, Clocked {
             break;
         case RETI: {
             IME = true;
-            PC = pop16();
+            PC = pop16()-opcode.encoding;
         }
             break;
 
@@ -998,6 +998,10 @@ public final class Cpu implements Component, Clocked {
             return false;
         }
     }
+    
+    public void requestInterrupt(Interrupt i) {
+        IF = Bits.set(IF, i.index(), true);
+    }
 
     private boolean interruptionWaiting() {
         return (IE & IF) != 0;
@@ -1006,7 +1010,7 @@ public final class Cpu implements Component, Clocked {
     private int getInterruption() {
         int temp = IE & IF;
         int index = Integer.lowestOneBit(temp);
-        return index;
+        return Integer.SIZE-Integer.numberOfLeadingZeros(index)-1;
     }
 
     @Override
