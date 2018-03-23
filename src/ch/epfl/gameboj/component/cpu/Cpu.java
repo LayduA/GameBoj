@@ -54,8 +54,8 @@ public final class Cpu implements Component, Clocked {
     private int PC;
 
     // The two 5-bit registers handling interruptions.
-    private int IE;
-    private int IF;
+    private int IE = 0;
+    private int IF = 0;
 
     private boolean IME;
 
@@ -137,7 +137,9 @@ public final class Cpu implements Component, Clocked {
      * executes it.
      */
     private void dispatch(Opcode opcode) {
-        int nextPC = PC + opcode.totalBytes;
+        int nextPC = clip(16, PC + opcode.totalBytes);
+        boolean mustIncrement = true;
+        System.out.println(opcode);
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
@@ -598,36 +600,42 @@ public final class Cpu implements Component, Clocked {
                     && test(getReg(Reg.F), Flag.C.index()));
             int valueF = getReg(Reg.F);
             valueF = set(valueF, Flag.C.index(), newValueC);
-            combineAluFlags(valueF, FlagSrc.CPU, FlagSrc.V0, FlagSrc.V0, FlagSrc.ALU);
+            combineAluFlags(valueF, FlagSrc.CPU, FlagSrc.V0, FlagSrc.V0,
+                    FlagSrc.ALU);
         }
             break;
 
         // Jumps
         case JP_HL: {
             PC = reg16(Reg16.HL);
+            mustIncrement = false;
         }
             break;
         case JP_N16: {
-            PC = read16AfterOpcode() - opcode.totalBytes;
+            PC = read16AfterOpcode();
+            mustIncrement = false;
         }
             break;
         case JP_CC_N16: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
                 PC = read16AfterOpcode();
+                mustIncrement = false;
             }
         }
             break;
         case JR_E8: {
-            int value = clip(8, signExtend8(read8AfterOpcode()));
-            PC += value;
+            int value = signExtend8(read8AfterOpcode());
+            PC = clip(16, nextPC + value);
+            mustIncrement = false;
         }
             break;
         case JR_CC_E8: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                int value = clip(8, signExtend8(read8AfterOpcode()));
-                PC += value;
+                int value = signExtend8(read8AfterOpcode());
+                PC = clip(16, nextPC + value);
+                mustIncrement = false;
             }
         }
             break;
@@ -635,30 +643,35 @@ public final class Cpu implements Component, Clocked {
         // Calls and returns
         case CALL_N16: {
             push16(nextPC);
-            PC = read16AfterOpcode() - opcode.totalBytes;
+            PC = read16AfterOpcode();
+            mustIncrement = false;
         }
             break;
         case CALL_CC_N16: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
                 push16(nextPC);
-                PC = read16AfterOpcode() - opcode.totalBytes;
+                PC = read16AfterOpcode();
+                mustIncrement = false;
             }
         }
             break;
         case RST_U3: {
             push16(nextPC);
-            PC = AddressMap.RESETS[extractBitIndex(opcode)] - opcode.totalBytes;
+            PC = AddressMap.RESETS[extractBitIndex(opcode)];
+            mustIncrement = false;
         }
             break;
         case RET: {
-            PC = pop16() - opcode.totalBytes;
+            PC = pop16();
+            mustIncrement = false;
         }
             break;
         case RET_CC: {
             if (extractCondition(opcode)) {
                 nextNonIdleCycle += opcode.additionalCycles;
-                PC = pop16() - opcode.totalBytes;
+                PC = pop16();
+                mustIncrement = false;
             }
         }
             break;
@@ -670,7 +683,8 @@ public final class Cpu implements Component, Clocked {
             break;
         case RETI: {
             IME = true;
-            PC = pop16()-opcode.encoding;
+            PC = pop16();
+            mustIncrement = false;
         }
             break;
 
@@ -682,7 +696,7 @@ public final class Cpu implements Component, Clocked {
         case STOP:
             throw new Error("STOP is not implemented");
         }
-        increment(opcode);
+        increment(opcode, mustIncrement);
 
     }
 
@@ -839,8 +853,10 @@ public final class Cpu implements Component, Clocked {
      * @param o
      *            : an opcode.
      */
-    private void increment(Opcode o) {
-        PC += o.totalBytes;
+    private void increment(Opcode o, boolean b) {
+        if (b) {
+            PC += o.totalBytes;
+        }
         nextNonIdleCycle += o.cycles;
     }
 
@@ -897,13 +913,13 @@ public final class Cpu implements Component, Clocked {
     }
 
     private void push16(int v) {
-        SP -= 2;
+        SP = clip(16, SP - 2);
         write16(SP, v);
     }
 
     private int pop16() {
         int data = read16(SP);
-        SP += 2;
+        SP = clip(16, SP + 2);
         return data;
     }
 
@@ -998,7 +1014,7 @@ public final class Cpu implements Component, Clocked {
             return false;
         }
     }
-    
+
     public void requestInterrupt(Interrupt i) {
         IF = Bits.set(IF, i.index(), true);
     }
@@ -1010,7 +1026,7 @@ public final class Cpu implements Component, Clocked {
     private int getInterruption() {
         int temp = IE & IF;
         int index = Integer.lowestOneBit(temp);
-        return Integer.SIZE-Integer.numberOfLeadingZeros(index)-1;
+        return Integer.SIZE - Integer.numberOfLeadingZeros(index) - 1;
     }
 
     @Override
@@ -1047,6 +1063,23 @@ public final class Cpu implements Component, Clocked {
                 && address < AddressMap.HIGH_RAM_END) {
             highRam.write(address - AddressMap.HIGH_RAM_START, data);
         }
+    }
+
+    public void writeInF(int val) {
+        setReg(Reg.F, val);
+    }
+
+    public boolean getIME() {
+        return IME;
+    }
+
+    public int[] _testIeIfIme() {
+        int[] tab = new int[3];
+        tab[0] = IE;
+        tab[1] = IF;
+        if (IME)
+            tab[2] = 1;
+        return tab;
     }
 
 }
