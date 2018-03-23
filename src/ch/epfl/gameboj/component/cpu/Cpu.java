@@ -61,6 +61,14 @@ public final class Cpu implements Component, Clocked {
 
     private Ram highRam = new Ram(AddressMap.HIGH_RAM_SIZE);
 
+    /*
+     * A File for our 8 single registers.
+     * 
+     * @see ch.epfl.gameboj.RegisterFile.java
+     */
+    private RegisterFile<Reg> bits8registerFile = new RegisterFile<>(
+            Reg.values());
+
     /**
      * The 8 registers of the CPU, each containing one byte.
      * 
@@ -69,14 +77,6 @@ public final class Cpu implements Component, Clocked {
     private enum Reg implements Register {
         A, F, B, C, D, E, H, L
     }
-
-    /*
-     * A File for our 8 single registers.
-     * 
-     * @see ch.epfl.gameboj.RegisterFile.java
-     */
-    private RegisterFile<Reg> bits8registerFile = new RegisterFile<>(
-            Reg.values());
 
     // To simplify our future tasks, we enumerate the pair of registers.
 
@@ -89,7 +89,7 @@ public final class Cpu implements Component, Clocked {
         V0, V1, ALU, CPU
     }
 
-    // Enumeration used to represent the interruption under the form of a 5-bit
+    // Enumeration used to represent interruptions under the form of a 5-bit
     // number.
     public enum Interrupt implements Bit {
         VBLANK, LCD_STAT, TIMER, SERIAL, JOYPAD
@@ -107,7 +107,7 @@ public final class Cpu implements Component, Clocked {
     }
 
     public void reallyCycle(long cycle) {
-
+        
         if (IME && interruptionWaiting()) {
             nextNonIdleCycle += 5;
             IME = false;
@@ -132,6 +132,107 @@ public final class Cpu implements Component, Clocked {
         }
     }
 
+    @Override
+    public void attachTo(Bus bus) {
+        this.bus = bus;
+        bus.attach(this);
+    }
+
+    @Override
+    public int read(int address) {
+        checkBits16(address);
+        if (address == AddressMap.REG_IE)
+            return IE;
+        if (address == AddressMap.REG_IF)
+            return IF;
+        if (address >= AddressMap.HIGH_RAM_START
+                && address < AddressMap.HIGH_RAM_END) {
+            return highRam.read(address - AddressMap.HIGH_RAM_START);
+        }
+        return NO_DATA;
+    }
+
+    @Override
+    public void write(int address, int data) {
+        checkBits16(address);
+        checkBits8(data);
+        if (address == AddressMap.REG_IE) {
+            IE = data;
+        }
+        if (address == AddressMap.REG_IF) {
+            IF = data;
+        }
+        if (address >= AddressMap.HIGH_RAM_START
+                && address < AddressMap.HIGH_RAM_END) {
+            highRam.write(address - AddressMap.HIGH_RAM_START, data);
+        }
+    }
+
+    public void requestInterrupt(Interrupt i) {
+        IF = Bits.set(IF, i.index(), true);
+    }
+
+    public void writeInF(int val) {
+        setReg(Reg.F, val);
+    }
+
+    public boolean getIME() {
+        return IME;
+    }
+
+    public int[] _testIeIfIme() {
+        int[] tab = new int[3];
+        tab[0] = IE;
+        tab[1] = IF;
+        if (IME)
+            tab[2] = 1;
+        return tab;
+    }
+
+    /**
+     * Creates an array to test all registers' value
+     * 
+     * @return the value of all registers, stored in an array of integers.
+     */
+    public int[] _testGetPcSpAFBCDEHL() {
+        int[] regs = new int[10];
+        regs[0] = PC;
+        regs[1] = SP;
+        int i = 2;
+        for (Reg a : Reg.values()) {
+            regs[i] = getReg(a);
+            i++;
+        }
+        return regs;
+    }
+
+    /**
+     * Builds an array of all opcodes of a certain kind.
+     * 
+     * @param k
+     *            : the kind of opcode wanted.
+     * @return an array of opcodes, indexed by their encoding.
+     */
+    private static Opcode[] buildOpcodeTable(Opcode.Kind k) {
+        Opcode[] table = new Opcode[0x100];
+    
+        for (Opcode o : Opcode.values()) {
+            if (o.kind == k) {
+                table[o.encoding] = o;
+            }
+        }
+        return table;
+    }
+
+    /**
+     * Builds an array of direct opcodes, indexed by their encoding.
+     */
+    private static final Opcode[] DIRECT_OPCODE_TABLE = buildOpcodeTable(
+            Opcode.Kind.DIRECT);
+
+    private static final Opcode[] PREFIXED_OPCODE_TABLE = buildOpcodeTable(
+    Opcode.Kind.PREFIXED);
+
     /**
      * Gets the opcode of the next instruction from the Program Counter, then
      * executes it.
@@ -139,7 +240,7 @@ public final class Cpu implements Component, Clocked {
     private void dispatch(Opcode opcode) {
         int nextPC = clip(16, PC + opcode.totalBytes);
         boolean mustIncrement = true;
-        System.out.println(opcode);
+        
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
@@ -701,30 +802,81 @@ public final class Cpu implements Component, Clocked {
     }
 
     /**
-     * Builds an array of direct opcodes, indexed by their encoding.
+     * Increments the Program Counter by an opcode's total needed bytes, and the
+     * next cycle in which the cycle() method will do something by its needed
+     * cycles.
+     * 
+     * @param o
+     *            : an opcode.
      */
-    private static final Opcode[] DIRECT_OPCODE_TABLE = buildOpcodeTable(
-            Opcode.Kind.DIRECT);
-
-    private static final Opcode[] PREFIXED_OPCODE_TABLE = buildOpcodeTable(
-            Opcode.Kind.PREFIXED);
+    private void increment(Opcode o, boolean b) {
+        if (b) {
+            PC += o.totalBytes;
+        }
+        nextNonIdleCycle += o.cycles;
+    }
 
     /**
-     * Builds an array of all opcodes of a certain kind.
+     * Reads a value from the bus at a certain address.
      * 
-     * @param k
-     *            : the kind of opcode wanted.
-     * @return an array of opcodes, indexed by their encoding.
+     * @param address
+     *            : the address at which to read.
+     * @return the unsigned 8-bit value stored at the address.
      */
-    private static Opcode[] buildOpcodeTable(Opcode.Kind k) {
-        Opcode[] table = new Opcode[0x100];
+    private int read8(int address) {
+        return bus.read(address);
+    }
 
-        for (Opcode o : Opcode.values()) {
-            if (o.kind == k) {
-                table[o.encoding] = o;
-            }
-        }
-        return table;
+    /**
+     * Reads the value stored in the address formed by the HL pair.
+     * 
+     * @return the unsigned 8-bit value stored at the HL address.
+     */
+    private int read8AtHl() {
+        return bus.read(reg16(Reg16.HL));
+    }
+
+    /**
+     * Reads the value stored at the address immediately after the one used for
+     * the opcode (which is the program counter)
+     * 
+     * @return the unsigned 8-bit value stored immediately after the Program
+     *         Counter.
+     */
+    private int read8AfterOpcode() {
+        return bus.read(PC + 1);
+    }
+
+    private int read16(int address) {
+        return make16(bus.read(address + 1), bus.read(address));
+    }
+
+    private int read16AfterOpcode() {
+        return read16(PC + 1);
+    }
+
+    private void write8(int address, int v) {
+        bus.write(address, v);
+    }
+
+    private void write16(int address, int v) {
+        bus.write(address, Bits.clip(8, v));
+        bus.write(address + 1, Bits.extract(v, 8, 8));
+    }
+
+    private void write8AtHl(int v) {
+        bus.write(reg16(Reg16.HL), v);
+    }
+
+    private void push16(int v) {
+        SP = clip(16, SP - 2);
+        write16(SP, v);
+    }
+
+    private int pop16() {
+        int data = read16(SP);
+        SP = clip(16, SP + 2);
+        return data;
     }
 
     /**
@@ -829,101 +981,6 @@ public final class Cpu implements Component, Clocked {
     }
 
     /**
-     * Creates an array to test all registers' value
-     * 
-     * @return the value of all registers, stored in an array of integers.
-     */
-    public int[] _testGetPcSpAFBCDEHL() {
-        int[] regs = new int[10];
-        regs[0] = PC;
-        regs[1] = SP;
-        int i = 2;
-        for (Reg a : Reg.values()) {
-            regs[i] = getReg(a);
-            i++;
-        }
-        return regs;
-    }
-
-    /**
-     * Increments the Program Counter by an opcode's total needed bytes, and the
-     * next cycle in which the cycle() method will do something by its needed
-     * cycles.
-     * 
-     * @param o
-     *            : an opcode.
-     */
-    private void increment(Opcode o, boolean b) {
-        if (b) {
-            PC += o.totalBytes;
-        }
-        nextNonIdleCycle += o.cycles;
-    }
-
-    /**
-     * Reads a value from the bus at a certain address.
-     * 
-     * @param address
-     *            : the address at which to read.
-     * @return the unsigned 8-bit value stored at the address.
-     */
-    private int read8(int address) {
-        return bus.read(address);
-    }
-
-    /**
-     * Reads the value stored in the address formed by the HL pair.
-     * 
-     * @return the unsigned 8-bit value stored at the HL address.
-     */
-    private int read8AtHl() {
-        return bus.read(reg16(Reg16.HL));
-    }
-
-    /**
-     * Reads the value stored at the address immediately after the one used for
-     * the opcode (which is the program counter)
-     * 
-     * @return the unsigned 8-bit value stored immediately after the Program
-     *         Counter.
-     */
-    private int read8AfterOpcode() {
-        return bus.read(PC + 1);
-    }
-
-    private int read16(int address) {
-        return make16(bus.read(address + 1), bus.read(address));
-    }
-
-    private int read16AfterOpcode() {
-        return read16(PC + 1);
-    }
-
-    private void write8(int address, int v) {
-        bus.write(address, v);
-    }
-
-    private void write16(int address, int v) {
-        bus.write(address, Bits.clip(8, v));
-        bus.write(address + 1, Bits.extract(v, 8, 8));
-    }
-
-    private void write8AtHl(int v) {
-        bus.write(reg16(Reg16.HL), v);
-    }
-
-    private void push16(int v) {
-        SP = clip(16, SP - 2);
-        write16(SP, v);
-    }
-
-    private int pop16() {
-        int data = read16(SP);
-        SP = clip(16, SP + 2);
-        return data;
-    }
-
-    /**
      * Creates a 16 bit value for a register pair, formed by the values stored
      * in each one of its components.
      * 
@@ -1015,10 +1072,6 @@ public final class Cpu implements Component, Clocked {
         }
     }
 
-    public void requestInterrupt(Interrupt i) {
-        IF = Bits.set(IF, i.index(), true);
-    }
-
     private boolean interruptionWaiting() {
         return (IE & IF) != 0;
     }
@@ -1027,59 +1080,6 @@ public final class Cpu implements Component, Clocked {
         int temp = IE & IF;
         int index = Integer.lowestOneBit(temp);
         return Integer.SIZE - Integer.numberOfLeadingZeros(index) - 1;
-    }
-
-    @Override
-    public void attachTo(Bus bus) {
-        this.bus = bus;
-        bus.attach(this);
-    }
-
-    @Override
-    public int read(int address) {
-        checkBits16(address);
-        if (address == AddressMap.REG_IE)
-            return IE;
-        if (address == AddressMap.REG_IF)
-            return IF;
-        if (address >= AddressMap.HIGH_RAM_START
-                && address < AddressMap.HIGH_RAM_END) {
-            return highRam.read(address - AddressMap.HIGH_RAM_START);
-        }
-        return NO_DATA;
-    }
-
-    @Override
-    public void write(int address, int data) {
-        checkBits16(address);
-        checkBits8(data);
-        if (address == AddressMap.REG_IE) {
-            IE = data;
-        }
-        if (address == AddressMap.REG_IF) {
-            IF = data;
-        }
-        if (address >= AddressMap.HIGH_RAM_START
-                && address < AddressMap.HIGH_RAM_END) {
-            highRam.write(address - AddressMap.HIGH_RAM_START, data);
-        }
-    }
-
-    public void writeInF(int val) {
-        setReg(Reg.F, val);
-    }
-
-    public boolean getIME() {
-        return IME;
-    }
-
-    public int[] _testIeIfIme() {
-        int[] tab = new int[3];
-        tab[0] = IE;
-        tab[1] = IF;
-        if (IME)
-            tab[2] = 1;
-        return tab;
     }
 
 }
