@@ -1,6 +1,9 @@
 package ch.epfl.gameboj;
 
+import ch.epfl.gameboj.component.Timer;
+import ch.epfl.gameboj.component.cartridge.Cartridge;
 import ch.epfl.gameboj.component.cpu.Cpu;
+import ch.epfl.gameboj.component.memory.BootRomController;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
 
@@ -9,11 +12,14 @@ public class GameBoy implements AddressMap{
     private Bus bus;
     private Cpu cpu;
     
+    private Timer timer;
+    
     private int cycles;
     
-    public GameBoy(Object cartridge) {
-       
-        //Cre<ting the work RAM
+    public GameBoy(Cartridge cartridge) {
+        if(cartridge == null) throw new NullPointerException();
+        
+        //Creating the work RAM
         Ram ram = new Ram(WORK_RAM_SIZE);
         
         //The echo RAM has the same reference as the work RAM to be able to write in one and read in the other.
@@ -28,9 +34,16 @@ public class GameBoy implements AddressMap{
         //Initializing the bus.
         bus = new Bus();
         
+        BootRomController BRC = new BootRomController(cartridge);
+        
+        timer = new Timer(cpu);
+        
         //Attaching our two controllers.
         bus.attach(ramController);
         bus.attach(echoRamController);
+        
+        bus.attach(BRC);
+        bus.attach(timer);
         
         cpu.attachTo(bus);
         
@@ -57,8 +70,13 @@ public class GameBoy implements AddressMap{
             throw new IllegalArgumentException();
         }
         for(int i = cycles; i<cycle;i++) {
+            timer.cycle(i);
             cpu.cycle(i);
             cycles+=1;
         }
+    }
+    
+    public Timer timer() {
+        return timer;
     }
 }

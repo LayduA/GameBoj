@@ -22,7 +22,7 @@ public final class Rom {
 
     public int read(int index) {
 
-       Objects.checkIndex(index, 0x100);
+       Objects.checkIndex(index, size());
        return Byte.toUnsignedInt(romData[index]);
         
     }

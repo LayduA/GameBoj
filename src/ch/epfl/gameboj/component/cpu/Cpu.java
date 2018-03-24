@@ -107,7 +107,6 @@ public final class Cpu implements Component, Clocked {
     }
 
     public void reallyCycle(long cycle) {
-        
         if (IME && interruptionWaiting()) {
             nextNonIdleCycle += 5;
             IME = false;
@@ -239,6 +238,7 @@ public final class Cpu implements Component, Clocked {
      */
     private void dispatch(Opcode opcode) {
         int nextPC = clip(16, PC + opcode.totalBytes);
+        System.out.println(opcode);
         boolean mustIncrement = true;
         
         // Deciding what to do depending on the opcode's family, then do it
@@ -749,9 +749,11 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case CALL_CC_N16: {
+
             if (extractCondition(opcode)) {
-                nextNonIdleCycle += opcode.additionalCycles;
                 push16(nextPC);
+                nextNonIdleCycle += opcode.additionalCycles;
+                
                 PC = read16AfterOpcode();
                 mustIncrement = false;
             }
@@ -1081,5 +1083,5 @@ public final class Cpu implements Component, Clocked {
         int index = Integer.lowestOneBit(temp);
         return Integer.SIZE - Integer.numberOfLeadingZeros(index) - 1;
     }
-
+    
 }
