@@ -14,9 +14,9 @@ public final class Timer implements Component, Clocked {
     private Cpu cpu;
 
     private int clock;
-    private int TIMA;
     private int TMA;
     private int TAC;
+    private int TIMA;
 
     public Timer(Cpu cpu) {
         if (cpu == null)
@@ -43,8 +43,11 @@ public final class Timer implements Component, Clocked {
     public void write(int address, int data) {
         checkBits16(address);
         switch (address) {
-        case AddressMap.REG_DIV:
+        case AddressMap.REG_DIV: {
+            boolean state0 = state();
             clock = 0;
+            incIfChange(state0);
+        }
         case AddressMap.REG_TIMA:
             checkBits8(data);
             TIMA = data;
@@ -55,21 +58,22 @@ public final class Timer implements Component, Clocked {
             checkBits8(data);
             boolean state0 = state();
             TAC = data;
-            TIMA = incIfChange(TIMA, state0);
-            checkTIMA();
+            incIfChange(state0);
         default:
             return;
         }
     }
 
     public void cycle(long cycle) {
-        if (clock == 0xFFFF) {
+        // if(clock == 512 || clock == 516) System.out.println(TIMA);
+        if (clock >= 0xFFFC) {
+            boolean state0 = state();
             clock = 0;
+            incIfChange(state0);
         } else {
             boolean state0 = state();
-            clock += 1;
-            TIMA = incIfChange(TIMA, state0);
-            checkTIMA();
+            clock += 4;
+            incIfChange(state0);
         }
 
     }
@@ -77,33 +81,31 @@ public final class Timer implements Component, Clocked {
     private int getIndex() {
         int temp = clip(2, TAC);
         switch (temp) {
-        case 0:
+        case 0b00:
             return 9;
-        case 1:
+        case 0b01:
             return 3;
-        case 2:
+        case 0b10:
             return 5;
-        case 3:
+        case 0b11:
             return 7;
         default:
             return 0;
         }
     }
-    private void checkTIMA() {
-        if (TIMA == 0x100) {
-            cpu.requestInterrupt(Interrupt.TIMER);
-            TIMA = TMA;
-        }
-    }
 
     private boolean state() {
-        return test(TAC, 2) && test(clock, getIndex());
+        return Bits.test(TAC, 2) && Bits.test(clock, getIndex());
     }
-    private int incIfChange(int value, boolean previousState) {
-        if(previousState && !state()) {
-            return value+1;
-        }else {
-            return value;
+
+    private void incIfChange(boolean previousState) {
+        if (previousState && !state()) {
+            TIMA += 1;
+            //System.out.println(TIMA);
+        }
+        if (TIMA >= 0x100) {
+            cpu.requestInterrupt(Interrupt.TIMER);
+            TIMA = TMA;
         }
     }
 }

@@ -26,6 +26,8 @@ import static ch.epfl.gameboj.component.cpu.Alu.unpackFlags;
 import static ch.epfl.gameboj.component.cpu.Alu.unpackValue;
 import static ch.epfl.gameboj.component.cpu.Alu.xor;
 
+import java.util.Arrays;
+
 import ch.epfl.gameboj.AddressMap;
 import ch.epfl.gameboj.Bus;
 import ch.epfl.gameboj.Register;
@@ -238,7 +240,9 @@ public final class Cpu implements Component, Clocked {
      */
     private void dispatch(Opcode opcode) {
         int nextPC = clip(16, PC + opcode.totalBytes);
-        System.out.println(opcode);
+        //System.out.println(Arrays.toString(_testGetPcSpAFBCDEHL()));
+        //if(opcode!= Opcode.NOP) System.out.println(opcode);
+
         boolean mustIncrement = true;
         
         // Deciding what to do depending on the opcode's family, then do it
@@ -469,7 +473,7 @@ public final class Cpu implements Component, Clocked {
             break;
         case DEC_R8: {
             Reg reg = extractReg(opcode, 3);
-            int valueFlags = sub(getReg(Reg.A), 1);
+            int valueFlags = sub(getReg(reg), 1);
             setRegFromAlu(reg, valueFlags);
             combineAluFlags(valueFlags, FlagSrc.ALU, FlagSrc.V1, FlagSrc.ALU,
                     FlagSrc.CPU);
@@ -500,7 +504,8 @@ public final class Cpu implements Component, Clocked {
             break;
         case DEC_R16SP: {
             Reg16 reg = extractReg16(opcode);
-            setReg16SP(reg, clip(16, reg16(reg) - 1));
+            int value = (reg == Reg16.AF ? clip(16,SP-1) : clip(16, reg16(reg) - 1));
+            setReg16SP(reg,value);
         }
             break;
 

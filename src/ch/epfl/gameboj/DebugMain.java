@@ -10,7 +10,7 @@ import ch.epfl.gameboj.component.cpu.Cpu;
 public final class DebugMain {
     
     public static void main(String[] args) throws IOException {
-        File romFile = new File(args[0]);
+        File romFile = new File("instr_timing.gb");
         long cycles = Long.parseLong(args[1]);
 
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
