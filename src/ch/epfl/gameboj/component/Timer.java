@@ -48,17 +48,21 @@ public final class Timer implements Component, Clocked {
             clock = 0;
             incIfChange(state0);
         }
+            break;
         case AddressMap.REG_TIMA:
             checkBits8(data);
             TIMA = data;
+            break;
         case AddressMap.REG_TMA:
             checkBits8(data);
             TMA = data;
+            break;
         case AddressMap.REG_TAC:
             checkBits8(data);
             boolean state0 = state();
             TAC = data;
             incIfChange(state0);
+            break;
         default:
             return;
         }
@@ -66,15 +70,12 @@ public final class Timer implements Component, Clocked {
 
     public void cycle(long cycle) {
         // if(clock == 512 || clock == 516) System.out.println(TIMA);
-        if (clock >= 0xFFFC) {
-            boolean state0 = state();
+        cpu.cycle(cycle);
+        boolean state0 = state();
+        clock += 4;
+        if (clock > 0xFFFF)
             clock = 0;
-            incIfChange(state0);
-        } else {
-            boolean state0 = state();
-            clock += 4;
-            incIfChange(state0);
-        }
+        incIfChange(state0);
 
     }
 
@@ -100,12 +101,13 @@ public final class Timer implements Component, Clocked {
 
     private void incIfChange(boolean previousState) {
         if (previousState && !state()) {
-            TIMA += 1;
-            //System.out.println(TIMA);
+            if (TIMA == 0xFF) {
+                cpu.requestInterrupt(Interrupt.TIMER);
+                TIMA = TMA;
+            } else {
+                TIMA += 1;
+            }
         }
-        if (TIMA >= 0x100) {
-            cpu.requestInterrupt(Interrupt.TIMER);
-            TIMA = TMA;
-        }
+
     }
 }
