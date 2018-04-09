@@ -71,6 +71,7 @@ public class GameBoy implements AddressMap{
         }
         for(int i = cycles; i<cycle;i++) {
             timer.cycle(i);
+            cpu.cycle(i);
             cycles+=1;
         }
     }

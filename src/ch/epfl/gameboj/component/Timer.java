@@ -19,8 +19,9 @@ public final class Timer implements Component, Clocked {
     private int TIMA;
 
     public Timer(Cpu cpu) {
-        if (cpu == null)
+        if (cpu == null) {
             throw new NullPointerException();
+        }
         this.cpu = cpu;
     }
 
@@ -42,6 +43,7 @@ public final class Timer implements Component, Clocked {
 
     public void write(int address, int data) {
         checkBits16(address);
+        checkBits8(data);
         switch (address) {
         case AddressMap.REG_DIV: {
             boolean state0 = state();
@@ -50,15 +52,12 @@ public final class Timer implements Component, Clocked {
         }
             break;
         case AddressMap.REG_TIMA:
-            checkBits8(data);
             TIMA = data;
             break;
         case AddressMap.REG_TMA:
-            checkBits8(data);
             TMA = data;
             break;
         case AddressMap.REG_TAC:
-            checkBits8(data);
             boolean state0 = state();
             TAC = data;
             incIfChange(state0);
@@ -69,8 +68,7 @@ public final class Timer implements Component, Clocked {
     }
 
     public void cycle(long cycle) {
-        // if(clock == 512 || clock == 516) System.out.println(TIMA);
-        cpu.cycle(cycle);
+        
         boolean state0 = state();
         clock += 4;
         if (clock > 0xFFFF)
