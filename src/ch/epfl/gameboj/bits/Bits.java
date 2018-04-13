@@ -4,11 +4,9 @@ import static ch.epfl.gameboj.Preconditions.*;
 
 import java.util.Objects;
 
-/**
- * 
+/** 
  * Different methods of bits manipulation.
- * @author Adrien
- * @author Michael
+ * @author Adrien Laydu, Michael Tasev
  *
  */
 
@@ -125,7 +123,7 @@ public final class Bits {
      * Extends an int from an 8-bit value, with the most significant bit extended to the index bits 8 to 31.
      * @param b , the int we modify.
      * @return an int with the bits of index 8 to 31 being 1 if the bit of index 7 is 1, or 0 if the bit of index 7 is 0.
-     * @throws IllegalArgumentException if b is not an 8-bits value.
+     * @throws IllegalArgumentException if b is not an 8-bit value.
      */
     
     public static int signExtend8(int b) {
@@ -138,7 +136,7 @@ public final class Bits {
      * Reverses an int of 8-bit value.
      * @param b , the int to reverse.
      * @return an int with the given int reversed bit-to-bit (the bits reversed are the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011.)
-     * @throws IllegalArgumentException if b is not an 8-bits value.
+     * @throws IllegalArgumentException if b is not an 8-bit value.
      */
     
     public static int reverse8(int b) {
@@ -186,10 +184,10 @@ public final class Bits {
 
     /**
      * Returns a 16-bits int with the two 8-bits parametres.
-     * @param highB , an 8-bits int which represent the 8 most significant bits of the new int.
-     * @param lowB , an 8-bits int which represent the 8 least significant bits of the new int.
-     * @return a 16-bits int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
-     * @throws IllegalArgumentException if b is not an 8-bits value.
+     * @param highB , an 8-bit int which represent the 8 most significant bits of the new int.
+     * @param lowB , an 8-bit int which represent the 8 least significant bits of the new int.
+     * @return a 16-bit int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
+     * @throws IllegalArgumentException if b is not an 8-bit value.
      */
     
     public static int make16(int highB, int lowB) {
