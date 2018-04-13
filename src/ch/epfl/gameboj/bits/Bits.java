@@ -4,31 +4,63 @@ import static ch.epfl.gameboj.Preconditions.*;
 
 import java.util.Objects;
 
-import ch.epfl.gameboj.Preconditions;
+/** 
+ * Different methods of bits manipulation.
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 
 public final class Bits {
 
     private Bits() {
     }
 
+    /**
+     * Returns an int with a unique 1 at the index given.
+     * @param index , the index of the int where the 1 will be placed.
+     * @return an int with a unique 1 at the index given.
+     * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
+     */
+    
     public static int mask(int index) {
         checkIndex(index);
         return (1 << index);
     }
 
+    /**
+     * Checks the bit of the int given at the index given.
+     * @param bits , the int from which a bit will be tested.
+     * @param index , the index of the bit we want to test.
+     * @return true if the bit tested is 1, false if the bit tested is 0.
+     * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
+     */
+    
     public static boolean test(int bits, int index) {
         checkIndex(index);
-        if ((bits & mask(index)) == 0) {
-            return false;
-        } else {
-            return true;
-        }
+        return ((bits & mask(index)) != 0);
     }
 
+    /**
+     * Checks the bit of the int given at the index of the bit given.
+     * @param bits , the int from which a bit will be tested.
+     * @param bit , the bit from which the index to test will be obtained.
+     * @return true if the bit tested is 1, false if the bit tested is 0. 
+     * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
+     */
+    
     public static boolean test(int bits, Bit bit) {
         return test(bits, bit.index());
     }
 
+    /**
+     * Returns an int with the same bits of the int given, except from the bit of the index given, which takes the value given.
+     * @param bits , the int to modify.
+     * @param index , the index of the int to modify.
+     * @param newValue , the value to modify the int at the index given.
+     * @return the int given with the bit of the index changed to 1 if newValue is true, 0 if newValue is false.
+     * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
+     */
+    
     public static int set(int bits, int index, boolean newValue) {
         checkIndex(index);
         if (newValue) {
@@ -40,44 +72,73 @@ public final class Bits {
 
     /**
      * Keeps only the least important bits of an integer.
-     * 
-     * @param size
-     *            : the number of bits to keep (all those before will be set to
-     *            0)
-     * @param bits
-     *            : the integer to clip
-     * @return the truncated integer
+     * @param size , the number of bits to keep (all those before will be set to 0).
+     * @param bits , the integer to clip.
+     * @return the truncated integer.
+     * @throws IllegalArgumentException if size is bigger or equal to 32 or smaller or equal to 0.
      */
     public static int clip(int size, int bits) {
         checkArgument(size <= 32 && size >= 0);
-        bits = bits << (32 - size);
-        bits = bits >>> (32 - size);
-        return (size == 0 ? 0 : bits);
+        if(size == 32 ) return bits;
+        bits = set(bits, 31, false);
+        return (bits%(1<<size));
     }
 
+    /**
+     * Returns an int with the size least significant bits of the int given rotated a given number of times (distance).
+     * @param size , the number of least significant bits of the int given we rotate.
+     * @param bits , the int we modify. 
+     * @param distance , the number of times we rotate the bits.
+     * @return an int with the size least significant bits rotated a given number of times and the other bits unchanged from the int given.
+     * @throws IllegalArgumentException if size is bigger or equal to 32 or strictly smaller than 0.
+     */
+    
     public static int rotate(int size, int bits, int distance) {
 
         checkArgument(size <= 32 && size > 0);
         distance = Math.floorMod(distance, size);
         int strongBits = extract(bits, size, 32 - size);
-        bits = (clip(size, (bits << distance)) | (bits >>> size - distance));
+        bits = (clip(size, (bits << distance)) | (bits >>> size - distance)); //the method advised by the course.
 
         return bits | (strongBits << size);
     }
 
+    /**
+     * Keeps only the bits of the int given, starting at start and of size size.
+     * @param bits , the int from which we extract bits.
+     * @param start , the index of the bit of the int given from which we extract bits.
+     * @param size , the size of the new int we extract.
+     * @return an int of size size we extracted from the int given from the index start.
+     * @throws IndexOutOfBoundsException if the first index is smaller than 0 or if there is an index bigger than the size of an integer.
+     */
+    
     public static int extract(int bits, int start, int size) {
-        Objects.checkFromIndexSize(start, size, 32);
+        Objects.checkFromIndexSize(start, size, Integer.SIZE);
         bits = clip(start + size, bits);
         bits = bits >>> (start);
         return (size == 0 ? 0 : bits);
     }
 
+    /**
+     * Extends an int from an 8-bit value, with the most significant bit extended to the index bits 8 to 31.
+     * @param b , the int we modify.
+     * @return an int with the bits of index 8 to 31 being 1 if the bit of index 7 is 1, or 0 if the bit of index 7 is 0.
+     * @throws IllegalArgumentException if b is not an 8-bit value.
+     */
+    
     public static int signExtend8(int b) {
         checkBits8(b);
         byte v = (byte) b;
         return (int) v;
     }
 
+    /**
+     * Reverses an int of 8-bit value.
+     * @param b , the int to reverse.
+     * @return an int with the given int reversed bit-to-bit (the bits reversed are the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011.)
+     * @throws IllegalArgumentException if b is not an 8-bit value.
+     */
+    
     public static int reverse8(int b) {
         checkBits8(b);
         int[] INVERSES = new int[] { 0x00, 0x80, 0x40, 0xC0, 0x20, 0xA0, 0x60,
@@ -109,11 +170,26 @@ public final class Bits {
         return INVERSES[b];
     }
 
+    /**
+     * Returns an int with every single bit replaced by his opposite.
+     * @param b , the int to inverse bit-to-bit.
+     * @return an int, with the 1's replaced by 0's, and the 0's replaced by 1's. eg 0110_0100 returns 1001_1011.
+     * @throws IllegalArgumentException if b is not an 8-bits value.
+     */
+    
     public static int complement8(int b) {
         checkBits8(b);
         return b ^ 0b1111_1111;
     }
 
+    /**
+     * Returns a 16-bit int with the two 8-bits parametres.
+     * @param highB , an 8-bit int which represent the 8 most significant bits of the new int.
+     * @param lowB , an 8-bit int which represent the 8 least significant bits of the new int.
+     * @return a 16-bit int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
+     * @throws IllegalArgumentException if b is not an 8-bit value.
+     */
+    
     public static int make16(int highB, int lowB) {
         checkBits8(highB);
         checkBits8(lowB);

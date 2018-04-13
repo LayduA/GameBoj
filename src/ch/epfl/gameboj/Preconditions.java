@@ -1,5 +1,10 @@
 package ch.epfl.gameboj;
 
+/**
+ * Different static conditions to be used to check several things, like bits, booleans or indexes and throw the corresponding exceptions.
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public interface Preconditions {
 
     /**
