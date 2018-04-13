@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /**
  * 
- * 
+ * Different methods of bits manipulation.
  * @author Adrien
  * @author Michael
  *
@@ -18,7 +18,7 @@ public final class Bits {
     }
 
     /**
-     * Creates an int with a unique 1 at the index given.
+     * Returns an int with a unique 1 at the index given.
      * @param index , the index of the int where the 1 will be placed.
      * @return an int with a unique 1 at the index given.
      * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
@@ -55,7 +55,7 @@ public final class Bits {
     }
 
     /**
-     * Creates a int with the same bits of the int given, except from the bit of the index given, which takes the value given.
+     * Returns an int with the same bits of the int given, except from the bit of the index given, which takes the value given.
      * @param bits , the int to modify.
      * @param index , the index of the int to modify.
      * @param newValue , the value to modify the int at the index given.
@@ -77,7 +77,7 @@ public final class Bits {
      * @param size , the number of bits to keep (all those before will be set to 0).
      * @param bits , the integer to clip.
      * @return the truncated integer.
-     * @throws IllegalArgumentException if size is bigger than 32 or smaller than 0.
+     * @throws IllegalArgumentException if size is bigger or equal to 32 or smaller or equal to 0.
      */
     public static int clip(int size, int bits) {
         checkArgument(size <= 32 && size >= 0);
@@ -87,12 +87,12 @@ public final class Bits {
     }
 
     /**
-     * 
-     * @param size , 
-     * @param bits , 
-     * @param distance , 
-     * @return
-     * @throws IllegalArgumentException if size is bigger than 32 or strictly smaller than 0.
+     * Returns an int with the size least significant bits of the int given rotated a given number of times (distance).
+     * @param size , the number of least significant bits of the int given we rotate.
+     * @param bits , the int we modify. 
+     * @param distance , the number of times we rotate the bits.
+     * @return an int with the size least significant bits rotated a given number of times and the other bits unchanged from the int given.
+     * @throws IllegalArgumentException if size is bigger or equal to 32 or strictly smaller than 0.
      */
     
     public static int rotate(int size, int bits, int distance) {
@@ -100,13 +100,13 @@ public final class Bits {
         checkArgument(size <= 32 && size > 0);
         distance = Math.floorMod(distance, size);
         int strongBits = extract(bits, size, 32 - size);
-        bits = (clip(size, (bits << distance)) | (bits >>> size - distance));
+        bits = (clip(size, (bits << distance)) | (bits >>> size - distance)); //the method advised by the course.
 
         return bits | (strongBits << size);
     }
 
     /**
-     * Creates an int keeping only the bits of the int given, starting at start and of size size.
+     * Keeps only the bits of the int given, starting at start and of size size.
      * @param bits , the int from which we extract bits.
      * @param start , the index of the bit of the int given from which we extract bits.
      * @param size , the size of the new int we extract.
@@ -122,7 +122,7 @@ public final class Bits {
     }
 
     /**
-     * Creates an int from an 8-bit value, with the most significant bit exxtended to the index bits 8 to 31.
+     * Extends an int from an 8-bit value, with the most significant bit extended to the index bits 8 to 31.
      * @param b , the int we modify.
      * @return an int with the bits of index 8 to 31 being 1 if the bit of index 7 is 1, or 0 if the bit of index 7 is 0.
      * @throws IllegalArgumentException if b is not an 8-bits value.
@@ -137,7 +137,7 @@ public final class Bits {
     /**
      * Reverses an int of 8-bit value.
      * @param b , the int to reverse.
-     * @return reverses bit-to-bit the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011.
+     * @return an int with the given int reversed bit-to-bit (the bits reversed are the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011.)
      * @throws IllegalArgumentException if b is not an 8-bits value.
      */
     
@@ -173,7 +173,7 @@ public final class Bits {
     }
 
     /**
-     * Creates an int with every single bit replaced by his opposite.
+     * Returns an int with every single bit replaced by his opposite.
      * @param b , the int to inverse bit-to-bit.
      * @return an int, with the 1's replaced by 0's, and the 0's replaced by 1's. eg 0110_0100 returns 1001_1011.
      * @throws IllegalArgumentException if b is not an 8-bits value.
@@ -185,7 +185,7 @@ public final class Bits {
     }
 
     /**
-     * Creates a 16-bits int with the two 8-bits parametres.
+     * Returns a 16-bits int with the two 8-bits parametres.
      * @param highB , an 8-bits int which represent the 8 most significant bits of the new int.
      * @param lowB , an 8-bits int which represent the 8 least significant bits of the new int.
      * @return a 16-bits int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
