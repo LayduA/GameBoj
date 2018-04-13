@@ -1,5 +1,10 @@
 package ch.epfl.gameboj.component;
 
+/**
+ * An entity connected to a clock.
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public interface Clocked {
     /**
      * Describe the behavior of the clocked component at a certain cycle

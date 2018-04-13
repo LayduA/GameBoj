@@ -2,7 +2,7 @@ package ch.epfl.gameboj.bits;
 
 /**
  * An interface to be used by enumerations, to represent them as a collection of bits.
- *
+ * @author Adrien Laydu, Michael Tasev
  */
 public interface Bit {
     
