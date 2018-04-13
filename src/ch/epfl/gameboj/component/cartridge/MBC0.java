@@ -7,9 +7,11 @@ import ch.epfl.gameboj.component.memory.Rom;
 public final class MBC0 implements Component {
     Rom rom;
     
+   private static final int ROM_SIZE = 0x8000;
+    
     public MBC0(Rom rom) {
         if (rom == null) throw new NullPointerException();
-        if (rom.size()!=0x8000) throw new IllegalArgumentException();
+        if (rom.size()!=ROM_SIZE) throw new IllegalArgumentException();
         this.rom = rom;
     }
     public void write(int address, int data) {
