@@ -30,7 +30,7 @@ public final class RamController implements Component {
         Objects.requireNonNull(ram);
         checkBits16(startAddress);
         checkBits16(endAddress-1);
-        checkArgument(endAddress - startAddress < 0 || endAddress - startAddress > ram.size());
+        checkArgument(!(endAddress - startAddress < 0 || endAddress - startAddress > ram.size()));
         this.ram = ram;
         start = startAddress;
         end = endAddress-1;
