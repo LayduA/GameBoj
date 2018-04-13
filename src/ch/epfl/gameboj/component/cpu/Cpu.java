@@ -979,8 +979,8 @@ public final class Cpu implements Component, Clocked {
         int condition = extract(opcode.encoding, 3, 2);
         boolean firstBit = Bits.test(condition, 1);
         boolean secondBit = Bits.test(condition, 0);
-        boolean zBit = Bits.test(getReg(Reg.F), Flag.Z.index());
-        boolean cBit = Bits.test(getReg(Reg.F), Flag.C.index());
+        boolean zBit = bits8registerFile.testBit(Reg.F, Flag.Z);
+        boolean cBit = bits8registerFile.testBit(Reg.F, Flag.C);
         if (!firstBit) {
             return (zBit && secondBit) || (!zBit && !secondBit);
         }
