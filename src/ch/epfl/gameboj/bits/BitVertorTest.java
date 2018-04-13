@@ -8,7 +8,7 @@ public class BitVertorTest {
         
         BitVector bv3 = BitVector.rand();
         //BitVector bv2 = bv3.extractZeroExtended(-64, 256);
-        BitVector bv4 = bv3.extractWrapped(-96, 256);
+        BitVector bv4 = bv3.extractZeroExtended(0,32);
         System.out.println(bv4);
         
     }

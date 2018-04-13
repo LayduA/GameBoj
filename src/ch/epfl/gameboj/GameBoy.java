@@ -1,5 +1,7 @@
 package ch.epfl.gameboj;
 
+import java.util.Objects;
+
 import ch.epfl.gameboj.component.Timer;
 import ch.epfl.gameboj.component.cartridge.Cartridge;
 import ch.epfl.gameboj.component.cpu.Cpu;
@@ -7,38 +9,46 @@ import ch.epfl.gameboj.component.memory.BootRomController;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
 
-public class GameBoy implements AddressMap{
+/**
+ * A simulated, functional Gameboy.
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
+public final class GameBoy implements AddressMap{
   
-    private Bus bus;
-    private Cpu cpu;
+    private final Bus bus;
+    private final Cpu cpu;
     
-    private Timer timer;
+    private final Timer timer;
     
     private int cycles;
     
+    /**
+     * Creates a new Gameboy with the given cartridge.
+     * @param cartridge : the initial cartridge of the GameBoy
+     */
     public GameBoy(Cartridge cartridge) {
-        if(cartridge == null) throw new NullPointerException();
+        Objects.requireNonNull(cartridge);
         
-        //Creating the work RAM
-        Ram ram = new Ram(WORK_RAM_SIZE);
+        //Creating the work RAM.
+        final Ram ram = new Ram(WORK_RAM_SIZE);
         
         //The echo RAM has the same reference as the work RAM to be able to write in one and read in the other.
-        Ram echoRam = ram;
+        final Ram echoRam = ram;
         
         //The two RAM controllers. Note that the echo RAM is de facto smaller than the work RAM.
-        RamController ramController = new RamController(ram,WORK_RAM_START);
-        RamController echoRamController = new RamController(echoRam,ECHO_RAM_START,ECHO_RAM_END);
+        final RamController ramController = new RamController(ram,WORK_RAM_START);
+        final RamController echoRamController = new RamController(echoRam,ECHO_RAM_START,ECHO_RAM_END);
         
+        //Initializing all the components.
         cpu = new Cpu();
-        
-        //Initializing the bus.
         bus = new Bus();
-        
-        BootRomController BRC = new BootRomController(cartridge);
-        
         timer = new Timer(cpu);
         
-        //Attaching our two controllers.
+        //The boot rom controller of the gameboy.
+        final BootRomController BRC = new BootRomController(cartridge);
+        
+        //Attaching our components.
         bus.attach(ramController);
         bus.attach(echoRamController);
         
@@ -50,32 +60,45 @@ public class GameBoy implements AddressMap{
     }
     
     /**
-     * Gets the Gameboy's bus.
-     * @return the Gameboy's bus.
+     * Simulates the Gameboy until a given cycle (excluded).
+     * @param cycle : a long, the cycle until which the Gameboy is to be run.
+     * @throws IllegalArgumentException if the given cycle has already been processed.
      */
-    public Bus bus() {
-        return bus;
-    }
-    
-    public Cpu cpu() {
-        return cpu;
-    }
-    
-    public int cycles() {
-        return cycles;
-    }
-    
     public void runUntil(long cycle) {
-        if (cycles > cycle) {
-            throw new IllegalArgumentException();
-        }
+        Preconditions.checkArgument(cycles<=cycle);
         for(int i = cycles; i<cycle;i++) {
             timer.cycle(i);
             cpu.cycle(i);
             cycles+=1;
         }
     }
+
+    /**
+     * Gets the Gameboy's bus.
+     * @return the Gameboy's bus.
+     */
+    public Bus bus() {
+        return bus;
+    }
+    /**
+     * Gets the Gameboy's cpu
+     * @return the Gameboy's cpu.
+     */
+    public Cpu cpu() {
+        return cpu;
+    }
+    /**
+     * Gets the number of cycle the Gameboy has processed yet.
+     * @return an integer, the number of cycles processed.
+     */
+    public int cycles() {
+        return cycles;
+    }
     
+    /**
+     * Gets the Gameboy's Timer
+     * @return the Gameboy's timer.
+     */
     public Timer timer() {
         return timer;
     }
