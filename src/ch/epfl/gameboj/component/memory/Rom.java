@@ -29,8 +29,8 @@ public final class Rom {
     }
 
     /**
-     * Gives the size of the rom.
-     * @return the length of the array that represents the rom.
+     * Gets the size of the rom.
+     * @return the size of the rom.
      */
     
     public int size() {

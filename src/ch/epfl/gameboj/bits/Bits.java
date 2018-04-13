@@ -183,7 +183,7 @@ public final class Bits {
     }
 
     /**
-     * Returns a 16-bits int with the two 8-bits parametres.
+     * Returns a 16-bit int with the two 8-bits parametres.
      * @param highB , an 8-bit int which represent the 8 most significant bits of the new int.
      * @param lowB , an 8-bit int which represent the 8 least significant bits of the new int.
      * @return a 16-bit int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
