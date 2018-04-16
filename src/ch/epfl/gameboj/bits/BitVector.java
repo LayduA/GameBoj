@@ -37,6 +37,10 @@ public final class BitVector {
     public BitVector(int size) {
         this(size, false);
     }
+    
+    public BitVector(BitVector b) {
+        this(b.elements);
+    }
 
     /**
      * Gets the bit vector's size.
@@ -167,6 +171,15 @@ public final class BitVector {
             return (strongBits << intSize-iMod32) | weakBits;
             
         }
+    }
+    /**
+     * Shifts the bit vector a given distance (positive distance shifts to 
+     * the left, negative distance to the right)
+     * @param distance : the distance to shift.
+     * @return a bit vector, with the value shifted.
+     */
+    public BitVector shift(int distance) {
+        return extractZeroExtended(-1 * distance, size());
     }
     
     /**
