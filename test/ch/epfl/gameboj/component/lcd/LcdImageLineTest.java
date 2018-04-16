@@ -1,0 +1,39 @@
+package ch.epfl.gameboj.component.lcd;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
+import ch.epfl.gameboj.bits.BitVector;
+
+class LcdImageLineTest {
+    
+    @Test
+    void getColorWorks() {
+        
+        assertEquals(3,LcdImageLine.getColor(2, 0b10110100));
+    }
+    
+    @Test
+    void colorsMapWork() {
+        BitVector.Builder bvb = new BitVector.Builder(32);
+        bvb.setInt(0, 0b11111111_11111111_00000000_00000000);
+        BitVector bv1 = bvb.build();
+        bvb = new BitVector.Builder(32);
+        bvb.setInt(0, 0b11111111_00000000_11111111_00000000);
+        BitVector bv2 = bvb.build();
+        
+        LcdImageLine lcdLine = new LcdImageLine(bv1, bv2, new BitVector(32));
+        LcdImageLine result1 = lcdLine.mapColors(0b10110100);
+        LcdImageLine result2 = lcdLine.mapColors(0b11111111);
+        LcdImageLine result3 = lcdLine.mapColors(0b01011011);
+        
+        assertEquals("11111111111111110000000000000000",result1.msb().toString());
+        assertEquals("00000000111111111111111100000000",result1.lsb().toString());
+        assertEquals("11111111111111111111111111111111",result2.lsb().toString());
+        assertEquals(result2.msb(),result2.lsb());
+        assertEquals("00000000000000001111111111111111",result3.msb().toString());
+        assertEquals("11111111111111110000000011111111",result3.lsb().toString());
+    }
+
+}

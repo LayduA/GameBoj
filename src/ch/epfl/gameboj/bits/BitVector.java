@@ -220,4 +220,35 @@ public final class BitVector {
     public int hashCode() {
         return Objects.hash(elements);
     }
+    
+    public final static class Builder{
+        private int[] elements;
+        public Builder(int size) {
+            Preconditions.checkArgument(size%32 == 0&&size>0);
+            elements = new int[size/32];
+        }
+        public Builder setByte(int index, int value) {
+            if (elements == null) throw new IllegalStateException();
+            Preconditions.checkIndex(elements.length/4);
+            Preconditions.checkBits8(value);
+            final int mask = 0b11111111 << 8*(index%4);
+            final int antiMask = ~mask;
+            final int previousValue = elements[index/4] & antiMask;
+            elements[index/4] = previousValue|value<<8*(index%4); 
+            return this;
+        }
+        public Builder setInt(int index, int value) {
+            if (elements == null) throw new IllegalStateException();
+            Preconditions.checkIndex(elements.length);
+            elements[index]=value;
+            return this;
+        }
+        
+        public BitVector build() {
+            if (elements == null) throw new IllegalStateException();
+            BitVector bv = new BitVector(elements);
+            elements = null;
+            return bv;
+        }
+    }
 }

@@ -8,7 +8,6 @@ public class LcdTest {
         // TODO Auto-generated method stub
         BitVector b = new BitVector(32,true);
         LcdImageLine lcd = new LcdImageLine(b, b, b);
-        System.out.println(lcd.getHalfByte(false, 0b11001001));
     }
 
 }
