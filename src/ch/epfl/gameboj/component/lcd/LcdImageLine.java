@@ -78,7 +78,7 @@ public final class LcdImageLine {
         return new LcdImageLine(finalMsb, finalLsb, opacity);
     }
 
-    public static int getColor(int index, int value) {
+    private int getColor(int index, int value) {
         
         return ((0b11 << 2 * index) & value) >> (2 * index);
     }
