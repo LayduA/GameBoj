@@ -8,7 +8,7 @@ import ch.epfl.gameboj.Preconditions;
 public final class BitVector {
 
     private final int[] elements;
-    private final static int intSize = Integer.SIZE;
+    private final static int INT_SIZE = Integer.SIZE;
 
     private BitVector(int[] elements) {
         this.elements = elements;
@@ -23,8 +23,8 @@ public final class BitVector {
      */
     public BitVector(int size, boolean initialValue) {
         
-        Preconditions.checkArgument(size %intSize == 0 && size >=0);
-        final int[] elements = new int[size / intSize];
+        Preconditions.checkArgument(size %INT_SIZE == 0 && size >=0);
+        final int[] elements = new int[size / INT_SIZE];
         Arrays.fill(elements, constructInt(initialValue));
         this.elements = elements;
     }
@@ -47,7 +47,7 @@ public final class BitVector {
      * @return an integer, the bit vector's size.
      */
     public int size() {
-        return elements.length * Integer.SIZE;
+        return elements.length * INT_SIZE;
     }
 
     /**
@@ -58,7 +58,7 @@ public final class BitVector {
      */
     public boolean testBit(int index) {
         if (index >= size()) throw new IndexOutOfBoundsException();
-        return Bits.test(elements[index / intSize], index % intSize);
+        return Bits.test(elements[index / INT_SIZE], index % INT_SIZE);
     }
 
     /**
@@ -145,10 +145,10 @@ public final class BitVector {
     private BitVector extract(int index, int size, Extension e) {
         
         Preconditions.checkArgument(size%32 == 0);
-        final int elementsNumber = size /intSize;
+        final int elementsNumber = size /INT_SIZE;
         final int[] newElements = new int[elementsNumber];
         for(int i = 0;i<newElements.length;i++) {
-            newElements[newElements.length-1-i] = getElementFromInfiniteExtension(index +intSize*i,e);
+            newElements[newElements.length-1-i] = getElementFromInfiniteExtension(index +INT_SIZE*i,e);
         }
         
         return new BitVector(newElements);
@@ -157,9 +157,9 @@ public final class BitVector {
 
   
     private int getElementFromInfiniteExtension(int index, Extension e) {
-        final int iOver32 = Math.floorDiv(index, intSize);
-        final int iMod32 = Math.floorMod(index, intSize);
-        if (Math.floorMod(index, intSize) == 0) {
+        final int iOver32 = Math.floorDiv(index, INT_SIZE);
+        final int iMod32 = Math.floorMod(index, INT_SIZE);
+        if (Math.floorMod(index, INT_SIZE) == 0) {
             if ((iOver32 < 0|| iOver32 >= elements.length)&&e == Extension.ZERO) {
                 return 0;
             } else {
@@ -168,7 +168,7 @@ public final class BitVector {
         }else {
             final int strongBits = Bits.clip(iMod32,getElementFromInfiniteExtension(index-iMod32+32,e));
             final int weakBits = Bits.extract(getElementFromInfiniteExtension(index-iMod32,e),iMod32,32-iMod32);
-            return (strongBits << intSize-iMod32) | weakBits;
+            return (strongBits << INT_SIZE-iMod32) | weakBits;
             
         }
     }
