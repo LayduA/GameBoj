@@ -3,6 +3,7 @@ package ch.epfl.gameboj.component.lcd;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import ch.epfl.gameboj.bits.BitVector;
 
@@ -34,6 +35,11 @@ public final class LcdImage {
         }
         return false;
     }
+    
+    public int hashCode() {
+        int lhc = lines.hashCode();
+        return Objects.hash(lhc,width,height);
+    }
 
     public int get(int x, int y) {
         final LcdImageLine line = lines.get(y);
@@ -53,13 +59,14 @@ public final class LcdImage {
         private List<LcdImageLine> lines;
 
         public Builder(int width, int height) {
+            this.width = width;
+            this.height = height;
             final BitVector bv0 = new BitVector(width);
             final LcdImageLine line0 = new LcdImageLine(bv0, bv0, bv0);
             lines = new ArrayList<LcdImageLine>(height);
             for(int i = 0; i<height;i++) {
                 lines.add(line0);
             }
-            System.out.println(lines.size());
         }
 
         public Builder setLine(int height, LcdImageLine line) {

@@ -91,18 +91,20 @@ public final class LcdImageLine {
     public LcdImageLine below(LcdImageLine other, BitVector opacVector) {
         Preconditions.checkArgument(other.size() == size());
         BitVector newMsb = (other.msb.and(opacVector))
-                .or(msb.and(other.opacity.not()));
+                .or(msb.and(opacVector.not()));
         BitVector newLsb = (other.lsb.and(opacVector))
-                .or(lsb.and(other.opacity.not()));
+                .or(lsb.and(opacVector.not()));
         BitVector newOpa = opacity.or(opacVector);
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
     public LcdImageLine join(LcdImageLine other, int index) {
+        Preconditions.checkArgument(index<other.size()&&index >=0);
         BitVector mask = (new BitVector(size(), true)).shift(index);
-        final BitVector newMsb = msb.or(other.msb.and(mask));
-        final BitVector newLsb = lsb.or(other.lsb.and(mask));
-        final BitVector newOpa = opacity.or(other.opacity.and(mask));
+        BitVector antiMask = mask.not();
+        final BitVector newMsb = (other.msb.and(antiMask)).or(msb.and(mask));
+        final BitVector newLsb = (other.lsb.and(antiMask)).or(lsb.and(mask));
+        final BitVector newOpa = (other.opacity.and(antiMask)).or(opacity.and(mask));
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 

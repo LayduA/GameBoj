@@ -5,6 +5,7 @@ import java.util.Objects;
 import ch.epfl.gameboj.component.Timer;
 import ch.epfl.gameboj.component.cartridge.Cartridge;
 import ch.epfl.gameboj.component.cpu.Cpu;
+import ch.epfl.gameboj.component.lcd.LcdController;
 import ch.epfl.gameboj.component.memory.BootRomController;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
@@ -20,6 +21,7 @@ public final class GameBoy implements AddressMap{
     private final Cpu cpu;
     
     private final Timer timer;
+    private final LcdController lcdController;
     
     private int cycles;
     
@@ -44,6 +46,7 @@ public final class GameBoy implements AddressMap{
         cpu = new Cpu();
         bus = new Bus();
         timer = new Timer(cpu);
+        lcdController = new LcdController(cpu);
         
         //The boot rom controller of the gameboy.
         final BootRomController BRC = new BootRomController(cartridge);
@@ -56,6 +59,7 @@ public final class GameBoy implements AddressMap{
         bus.attach(timer);
         
         cpu.attachTo(bus);
+        lcdController.attachTo(bus);
         
     }
     
@@ -69,6 +73,7 @@ public final class GameBoy implements AddressMap{
         for(int i = cycles; i<cycle;i++) {
             timer.cycle(i);
             cpu.cycle(i);
+            lcdController.cycle(i);
             cycles+=1;
         }
     }
@@ -101,5 +106,9 @@ public final class GameBoy implements AddressMap{
      */
     public Timer timer() {
         return timer;
+    }
+    
+    public LcdController lcdController() {
+        return lcdController;
     }
 }
