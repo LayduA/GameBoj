@@ -1,6 +1,7 @@
 package ch.epfl.gameboj.component.lcd;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import ch.epfl.gameboj.AddressMap;
@@ -28,7 +29,7 @@ public final class LcdController implements Component, Clocked {
     private LcdImage currentImage;
 
     private int lineCount;
-    
+
     public LcdController(Cpu cpu) {
         this.cpu = cpu;
     }
@@ -48,7 +49,9 @@ public final class LcdController implements Component, Clocked {
     }
 
     public LcdImage currentImage() {
-        if(currentImage != null) return currentImage;
+        if (currentImage != null) {
+            return currentImage;
+        }
         BitVector v = new BitVector(LCD_WIDTH, false);
         ArrayList<LcdImageLine> lines = new ArrayList<LcdImageLine>(LCD_HEIGHT);
         for (int i = 0; i < LCD_HEIGHT; i++) {
@@ -66,7 +69,6 @@ public final class LcdController implements Component, Clocked {
             int index = address - AddressMap.REGS_LCDC_START;
             return file.get(LcdReg.values()[index]);
         }
-        boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
         if (address >= AddressMap.VIDEO_RAM_START
                 && address < AddressMap.VIDEO_RAM_END) {
             return videoRam.read(address - AddressMap.VIDEO_RAM_START);
@@ -75,6 +77,8 @@ public final class LcdController implements Component, Clocked {
     }
 
     public void write(int address, int data) {
+        Preconditions.checkBits16(address);
+        Preconditions.checkBits8(data);
         if (address >= AddressMap.REGS_LCDC_START
                 && address < AddressMap.REGS_LCDC_END) {
             int index = address - AddressMap.REGS_LCDC_START;
@@ -113,31 +117,38 @@ public final class LcdController implements Component, Clocked {
 
     public void reallyCycle(long cycle) {
         int cyclesFromImageStart = (int) (cycle - lcdOnCycle) % (154 * 114);
+        if (cyclesFromImageStart == 0) {
+            nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);
+            setMode(1);
+        }
         
-        int lineCycle = cyclesFromImageStart % 114;
-        if (lineCount >= 140) {
+        switch (getMode()) {
+        case 1:
+            setMode(2);
+            nextNonIdleCycle += 20;
+            break;
+        case 2:
+            setMode(3);
+            nextImageBuilder.setLine(lineCount, computeLine(lineCount));
+            nextNonIdleCycle += 43;
+            break;
+        case 3:
+            setMode(0);
+            lineCount++;
+            nextNonIdleCycle += 51;
+            break;
+        case 0:
             setMode(1);
             currentImage = nextImageBuilder.build();
-        } else {
-            switch (lineCycle) {
-            case 0:
-                setMode(2);
-                if (lineCycle == 0) {
-                    nextImageBuilder = new LcdImage.Builder(LCD_WIDTH,
-                            LCD_HEIGHT);
-                }
-                break;
-            case 20:
-                setMode(3);
-                nextImageBuilder.setLine(lineCount, computeLine(lineCount));
-                break;
-            case 63:
-                setMode(0);
-                lineCount ++;
-                break;
-            }
+            nextNonIdleCycle += 10 * 114;
+            lineCount = 0;
+            break;
+        default:
+            break;
         }
-        if (lineCycle == 0) {
+        if (cyclesFromImageStart % 114 == 0)
+
+        {
             file.set(LcdReg.LY, lineCount);
         }
 
@@ -157,26 +168,39 @@ public final class LcdController implements Component, Clocked {
 
     }
 
+    private int getMode() {
+        int strongBit = testInReg(LcdReg.STAT, STAT.MODE1) ? 1 : 0;
+        int weakBit = testInReg(LcdReg.STAT, STAT.MODE0) ? 1 : 0;
+        return strongBit << 1 | weakBit;
+    }
+
     private LcdImageLine computeLine(int index) {
         LcdImageLine.Builder lineBuilder = new LcdImageLine.Builder(LCD_WIDTH);
-        
         final int dataStart = (testInReg(LcdReg.LCDC, LCDC.BG_AREA)
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
-        final int startTileIndexInData = (index+file.get(LcdReg.SCY)/8)*32+(file.get(LcdReg.SCX)/8);
+        final int startTileIndexInData = (index + file.get(LcdReg.SCY) / 8) * 32
+                + (file.get(LcdReg.SCX) / 8);
         final int startTile = dataStart + startTileIndexInData;
-        final int lineIndex = index%8;
-        for(int i = 0; i<20;++i) {
-            int tileIndex = read(i+startTile);
-            int strongBits = getLineFromTile(tileIndex, lineIndex+1);
-            int weakBits = getLineFromTile(tileIndex, lineIndex);
-            lineBuilder.setBytes(i, strongBits, weakBits);
+        final int lineIndex = index % 8;
+
+        for (int i = 0; i < 20; ++i) {
+            int tileIndex = read(i + startTile);
+            // System.out.println(Integer.toHexString(i+startTile) + " " +
+            // tileIndex + " " + index);
+            int strongBits = getLineFromTile(tileIndex, 2 * lineIndex+1);
+            int weakBits = getLineFromTile(tileIndex, 2 * lineIndex);
+            if (strongBits != 0)
+                // System.out.println(Integer.toBinaryString(strongBits));
+                lineBuilder.setBytes(i, strongBits, weakBits);
         }
         return lineBuilder.build();
     }
 
     private int getTileAddress(int index) {
         boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
+        if (index != 0 && index != 256)
+            System.out.println(index);
         if (tileSource) {
             return AddressMap.TILE_SOURCE[1] + index * 16;
         } else {
@@ -188,6 +212,7 @@ public final class LcdController implements Component, Clocked {
     }
 
     private int getLineFromTile(int tileIndex, int lineIndex) {
+
         return read(getTileAddress(tileIndex) + lineIndex);
     }
 
