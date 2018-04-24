@@ -45,7 +45,6 @@ public final class LcdImage {
         final LcdImageLine line = lines.get(y);
         final BitVector msb = line.msb();
         final BitVector lsb = line.lsb();
-
         final int strongBit = (msb.testBit(x) ? 1 : 0);
         final int weakBit = (lsb.testBit(x) ? 1 : 0);
 
