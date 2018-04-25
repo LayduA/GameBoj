@@ -87,7 +87,7 @@ public final class LcdController implements Component, Clocked {
             LcdReg reg = LcdReg.values()[index];
             if (reg == LcdReg.LCDC && !Bits.test(data, LCDC.LCD_STATUS)) {
                 setMode(0);
-                file.set(LcdReg.LY, 0);
+                modifyLYLYC(LcdReg.LY, 0);
                 nextNonIdleCycle = Long.MAX_VALUE;
             } else if (reg == LcdReg.STAT) {
                 final int value = file.get(LcdReg.STAT);
@@ -172,7 +172,7 @@ public final class LcdController implements Component, Clocked {
 
     private void setMode(int mode) {
         if (mode < 3) {
-            if (testInReg(LcdReg.STAT, STAT.INT_MODE0.index() + mode)) {
+            if (testInReg(LcdReg.STAT, STAT.values()[STAT.INT_MODE0.index() + mode])) {
                 cpu.requestInterrupt(Interrupt.LCD_STAT);
             }
             if (mode == 1) {
@@ -270,12 +270,8 @@ public final class LcdController implements Component, Clocked {
         file.set(reg, data);
     }
 
-    private boolean testInReg(LcdReg reg, int index) {
-        return Bits.test(file.get(reg), index);
-    }
-
     private boolean testInReg(LcdReg reg, Bit index) {
-        return Bits.test(file.get(reg), index.index());
+        return file.testBit(reg, index);
     }
 
     private void setInReg(LcdReg reg, int index, boolean newBitValue) {
