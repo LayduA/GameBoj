@@ -106,8 +106,6 @@ public final class LcdController implements Component, Clocked {
     }
 
     public void cycle(long cycle) {
-        if (testInReg(LcdReg.LCDC, LCDC.WIN))
-            System.out.println("ow");
         if (nextNonIdleCycle == Long.MAX_VALUE
                 && testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
             nextNonIdleCycle = cycle;
