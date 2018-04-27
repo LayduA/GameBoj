@@ -15,7 +15,13 @@ import ch.epfl.gameboj.component.cpu.Cpu;
 import ch.epfl.gameboj.component.cpu.Cpu.Interrupt;
 import ch.epfl.gameboj.component.memory.Ram;
 
+/*
+ * A component that controls the screen.
+ */
 public final class LcdController implements Component, Clocked {
+    /*
+     * The dimensions of the visible screen.
+     */
     public static final int LCD_WIDTH = 160;
     public static final int LCD_HEIGHT = 144;
 
@@ -53,6 +59,10 @@ public final class LcdController implements Component, Clocked {
         this.cpu = cpu;
     }
 
+    /*
+     * Returns the current image if it exists, or an image filled with empty
+     * lines if the current image does not exist.
+     */
     public LcdImage currentImage() {
         if (currentImage != null) {
             return currentImage;
@@ -64,6 +74,12 @@ public final class LcdController implements Component, Clocked {
         return new LcdImage(LCD_WIDTH, LCD_HEIGHT, lines);
     }
 
+    /*
+     * Reads the byte of data at the address given only if the address is of
+     * LCDC registers or the video RAM. Returns NO_DATA otherwise.
+     * 
+     * @see ch.epfl.gameboj.component.Component#read(int)
+     */
     public int read(int address) {
         Preconditions.checkBits16(address);
         if (address < AddressMap.REGS_LCDC_END
@@ -78,6 +94,12 @@ public final class LcdController implements Component, Clocked {
         return NO_DATA;
     }
 
+    /*
+     * Stores the given data at the given address, and modifies some registers
+     * when needed.
+     * 
+     * @see ch.epfl.gameboj.component.Component#write(int, int)
+     */
     public void write(int address, int data) {
         Preconditions.checkBits16(address);
         Preconditions.checkBits8(data);
@@ -105,6 +127,10 @@ public final class LcdController implements Component, Clocked {
         }
     }
 
+    /*
+     * Describe the behavior of the controller at a certain cycle.
+     * @see ch.epfl.gameboj.component.Clocked#cycle(long)
+     */
     public void cycle(long cycle) {
         if (nextNonIdleCycle == Long.MAX_VALUE
                 && testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
@@ -135,11 +161,11 @@ public final class LcdController implements Component, Clocked {
             if (lineCount == 153) {
                 nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);
                 setMode(2);
-                nextNonIdleCycle+=1;
+                nextNonIdleCycle += 1;
                 lineCount = 0;
-            }else {
+            } else {
                 nextNonIdleCycle += 114;
-                lineCount ++;
+                lineCount++;
             }
             break;
         case 2:
@@ -172,7 +198,8 @@ public final class LcdController implements Component, Clocked {
 
     private void setMode(int mode) {
         if (mode < 3) {
-            if (testInReg(LcdReg.STAT, STAT.values()[STAT.INT_MODE0.index() + mode])) {
+            if (testInReg(LcdReg.STAT,
+                    STAT.values()[STAT.INT_MODE0.index() + mode])) {
                 cpu.requestInterrupt(Interrupt.LCD_STAT);
             }
             if (mode == 1) {
