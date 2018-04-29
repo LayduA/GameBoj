@@ -163,6 +163,7 @@ public final class LcdController implements Component, Clocked {
                 setMode(2);
                 nextNonIdleCycle += 1;
                 lineCount = 0;
+                winY=0;
             } else {
                 nextNonIdleCycle += 114;
                 lineCount++;
@@ -230,13 +231,12 @@ public final class LcdController implements Component, Clocked {
 
     private LcdImageLine computeWinLine(int index) {
         final int wx = file.get(LcdReg.WX) - 7;
-        if (wx < 0 || wx >= 160 || !testInReg(LcdReg.LCDC, LCDC.WIN))
-            return EMPTY_LINE;
+        
         final int dataStart = (testInReg(LcdReg.LCDC, LCDC.WIN_AREA)
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
-        winY = (winY == 255 ? 0 : winY + 1);
-        return computeWinOrBGLine(index, dataStart, 0, 0);
+        winY = (winY + 1)%256;
+        return computeWinOrBGLine(index, dataStart, -wx, 0);
 
     }
 
@@ -260,13 +260,14 @@ public final class LcdController implements Component, Clocked {
     }
 
     private LcdImageLine computeLine(int index) {
-        LcdImageLine bgLine = computeBGLine(index);
-        if (index < file.get(LcdReg.WY)) {
+        final LcdImageLine bgLine = computeBGLine(index);
+        final int wx = file.get(LcdReg.WX)-7;
+        if (index < file.get(LcdReg.WY) || wx < 0 || wx >= 160 || !testInReg(LcdReg.LCDC, LCDC.WIN)) {
             return bgLine;
         }
-        LcdImageLine winLine = computeWinLine(winY)
-                .shift((file.get(LcdReg.WX) - 7) * (-1));
-        return bgLine.below(winLine);
+        final LcdImageLine winLine = computeWinLine(winY);
+        //System.out.println(wx);
+        return bgLine.join(winLine,LCD_WIDTH-1-wx);
 
     }
 
