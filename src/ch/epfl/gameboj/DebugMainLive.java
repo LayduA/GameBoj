@@ -23,7 +23,7 @@ public final class DebugMainLive extends Application {
 
     /** Configuration */
 
-    private static final String ROM_PATH = "flappyboy.gb";
+    private static final String ROM_PATH = "01-special.gb";
 
     private static final float EMULATION_SPEED = 1f;
     private static final int CYCLES_PER_ITERATION = (int)(17_556 * EMULATION_SPEED);
