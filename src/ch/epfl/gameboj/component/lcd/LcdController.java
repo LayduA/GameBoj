@@ -3,6 +3,7 @@ package ch.epfl.gameboj.component.lcd;
 import static org.junit.jupiter.api.Assumptions.assumingThat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import ch.epfl.gameboj.AddressMap;
 import ch.epfl.gameboj.Bus;
@@ -370,18 +371,35 @@ public final class LcdController implements Component, Clocked {
     }
 
     private int[] spritesIntersectingLine(int index) {
-        ArrayList<Integer> tiles = new ArrayList<Integer>();
-        int tileIndexAddress = 0;
-        while (tiles.size() < 10 || tileIndexAddress < AddressMap.OAM_RAM_SIZE-3) {
-            int yCoord = objectRam.read(tileIndexAddress);
-            if (index >= yCoord && index < yCoord + 8) {
-                tiles.add(objectRam.read(tileIndexAddress + 1) << 8
-                        | objectRam.read(tileIndexAddress + 2));
+        int[] tiles = new int[10];
+        int count = 0;
+        int tileIndex = 0;
+        final boolean sprite16 = testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE);
+        while ( count < 10 && tileIndex < AddressMap.OAM_RAM_SIZE-3) {
+            int yCoord = objectRam.read(tileIndex);
+            if (index >= yCoord-8 && index < yCoord) {
+                tiles[count] = objectRam.read(tileIndex + 1) << 8
+                        | objectRam.read(tileIndex + 2);
+                count ++;
 
             }
-            tileIndexAddress += 4;
+            tileIndex += 4;
         }
-        return null;
+        if(count == 0) return null;
+        Arrays.sort(tiles, 0, count-1);
+        final int[] tilesIndexes = new int[count];
+        for(int i = 0; i<count; i++) {
+            tilesIndexes[i] = Bits.clip(8, tiles[i]);
+        }
+        return tilesIndexes;
+    }
+    
+    private LcdImageLine individualSpriteLine(int tileIndex, int lineIndex) {
+        LcdImageLine.Builder builder = new LcdImageLine.Builder(LCD_WIDTH);
+        int weakBits = getLineFromTile(tileIndex, 2*lineIndex);
+        int strongBits = getLineFromTile(tileIndex, (2*lineIndex)+1);
+        builder.setBytes(0, strongBits, weakBits);
+        return builder.build().mapColors(0);
     }
 
 }
