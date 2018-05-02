@@ -148,7 +148,7 @@ public final class BitVector {
         final int elementsNumber = size /INT_SIZE;
         final int[] newElements = new int[elementsNumber];
         for(int i = 0;i<newElements.length;i++) {
-            newElements[newElements.length-1-i] = getElementFromInfiniteExtension(index +INT_SIZE*i,e);
+            newElements[i] = getElementFromInfiniteExtension(index +INT_SIZE*i,e);
         }
         
         return new BitVector(newElements);
