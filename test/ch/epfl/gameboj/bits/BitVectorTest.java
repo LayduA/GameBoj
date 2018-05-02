@@ -263,6 +263,7 @@ public class BitVectorTest {
         assertEquals("10011000000000010101010111100001", v7.toString());
         BitVector v8 = v4.extractWrapped(-14, 64);
         assertEquals("0111111110000000000000000011010101111111100000000000000000110101", v8.toString());
+                  // "0111111110000000000000000011010101111111100000000000000000110101"
         BitVector v9 = v3.extractWrapped(-32, 32);
         assertEquals("11001100000000001010101011110000", v9.toString());
     }

@@ -104,7 +104,7 @@ public final class BitVector {
     }
     
     private int getElement(int index) {
-        return elements[elements.length-1-index];
+        return elements[index];
     }
 
     private int constructInt(boolean b) {
@@ -188,8 +188,11 @@ public final class BitVector {
     public String toString() {
         String s = "";
         for(int i = 0;i<elements.length;i++) {
+            
             int a = getElement(i);
-            s = Integer.toBinaryString(a)+s;
+            //System.out.println(Integer.toBinaryString(a));
+            s = Integer.toBinaryString(a)+ s;
+            
             while(s.length()%32!=0) {
                 s = "0"+s;
             }

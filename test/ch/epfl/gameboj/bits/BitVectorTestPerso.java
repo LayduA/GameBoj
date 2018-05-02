@@ -109,14 +109,18 @@ public class BitVectorTestPerso {
         // a : 1001011001010101101010101100110010010110010101011010101011001100
         // b : 0101010111011101000100011110111001010101110111010001000111101110
         BitVector b = builder.build();
+        
         BitVector c1 = a.extractZeroExtended(-7, 32);
         BitVector c2 = a.extractZeroExtended(15, 64);
         BitVector c3 = a.extractZeroExtended(15, 32);
         BitVector c4 = a.extractZeroExtended(-32, 32);
         assertTrue("00101010110101010110011000000000".equals(c1.toString()));
         assertTrue("0000000000000001001011001010101101010101100110010010110010101011".equals(c2.toString()));
+                // "00000000000000010010110010101011_01010101_10011001_00101100_10101011"
+        
         assertTrue("01010101100110010010110010101011".equals(c3.toString()));
         assertTrue("00000000000000000000000000000000".equals(c4.toString()));
+        
         BitVector d1 = b.extractWrapped(0, 32);
         BitVector d2 = b.extractWrapped(0, 64);
         BitVector d3 = b.extractWrapped(1, 64);
@@ -125,6 +129,7 @@ public class BitVectorTestPerso {
         assertTrue("0101010111011101000100011110111001010101110111010001000111101110".equals(d2.toString()));
         assertTrue("0010101011101110100010001111011100101010111011101000100011110111".equals(d3.toString()));
         assertTrue("1001010101110111010001000111101110010101011101110100010001111011".equals(d4.toString()));
+        
     }
     
     @Test
