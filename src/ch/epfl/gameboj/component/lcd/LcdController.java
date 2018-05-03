@@ -1,7 +1,5 @@
 package ch.epfl.gameboj.component.lcd;
 
-import static org.junit.jupiter.api.Assumptions.assumingThat;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
