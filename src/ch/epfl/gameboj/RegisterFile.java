@@ -63,7 +63,7 @@ public final class RegisterFile<E extends Register> {
      * @throws IndexOutOfBoundsException if the bit has a negative or too large index.
      */
     public void setBit(E reg, Bit bit, boolean newValue) {
-        set(reg, (byte)Bits.set(get(reg), bit.index(), newValue));
+        set(reg,Bits.set(get(reg), bit.index(), newValue));
     }
   
 }
