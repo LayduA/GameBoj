@@ -15,7 +15,9 @@ import ch.epfl.gameboj.AddressMap;
  */
 public final class BootRomController implements Component {
 
-    private Cartridge cartridge;
+    private final Cartridge cartridge;
+    
+    private final static Rom bootRom = new Rom(BootRom.DATA);
 
     private boolean bootRomDeactivated;
 
@@ -55,7 +57,7 @@ public final class BootRomController implements Component {
         if(!bootRomDeactivated && address < AddressMap.BOOT_ROM_END) {
             //if the boot rom is still enabled and the address is contained is the boot rom, then
             //the value is read in the boot rom.
-            return Byte.toUnsignedInt(BootRom.DATA[address]);
+            return bootRom.read(address);
         }else {
             //otherwise we let the cartridge handle the reading.
             return cartridge.read(address);

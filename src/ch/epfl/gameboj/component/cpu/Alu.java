@@ -67,7 +67,7 @@ public final class Alu {
      * @throws IllegalArgumentException, if the number is not a value-flags pack.
      */
     public static int unpackValue(int valueFlags) {
-        checkArgument(valueFlags< 0b1_00000000_00000000_00000000 && valueFlags>= 0);
+        checkArgument(valueFlags>= 0);
         return extract(valueFlags,8,16);
     }
 
@@ -78,7 +78,7 @@ public final class Alu {
      * @throws IllegalArgumentException, if the number is not a value-flags pack.
      */
     public static int unpackFlags(int valueFlags) {
-        checkArgument(valueFlags< 0b1_00000000_00000000_00000000 && valueFlags >= 0);
+        checkArgument(valueFlags >= 0);
         return extract(valueFlags, 0, 8);
     }
 

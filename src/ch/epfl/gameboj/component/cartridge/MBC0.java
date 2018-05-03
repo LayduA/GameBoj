@@ -11,7 +11,7 @@ import ch.epfl.gameboj.component.memory.Rom;
  */
 
 public final class MBC0 implements Component {
-    Rom rom;
+   private final Rom rom;
     
    private static final int ROM_SIZE = 0x8000;
     
@@ -24,7 +24,7 @@ public final class MBC0 implements Component {
    
     public MBC0(Rom rom) {
         if (rom == null) throw new NullPointerException();
-        if (rom.size()!=ROM_SIZE) throw new IllegalArgumentException();
+        Preconditions.checkArgument(rom.size()==ROM_SIZE);
         this.rom = rom;
     }
     

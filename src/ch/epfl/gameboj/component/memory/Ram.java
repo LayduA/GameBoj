@@ -2,7 +2,9 @@ package ch.epfl.gameboj.component.memory;
 
 import static ch.epfl.gameboj.Preconditions.checkBits8;
 
-import java.util.Objects;;
+import java.util.Objects;
+
+import ch.epfl.gameboj.Preconditions;;
 
 /**
  * A random access memory.
@@ -12,7 +14,7 @@ import java.util.Objects;;
 
 public final class Ram {
 
-    private byte[] ramData;
+    private final byte[] ramData;
 
     /**
      * Creates a ram of the given size.
@@ -21,11 +23,9 @@ public final class Ram {
      */
     
     public Ram(int size) {
-        if (size >= 0) {
-            ramData = new byte[size];
-        } else {
-            throw new IllegalArgumentException();
-        }
+        Preconditions.checkArgument(size >=0);
+        ramData = new byte[size];
+        
     }
     
     /**

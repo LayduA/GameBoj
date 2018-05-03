@@ -52,7 +52,7 @@ public final class RegisterFile<E extends Register> {
      * @throws IndexOutOfBoundsException if the bit has a negative or too large index.
      */
     public boolean testBit(E reg, Bit b) {
-        return Bits.test(registerValues[reg.index()], b);
+        return Bits.test(get(reg), b);
     }
     
     /**
@@ -63,7 +63,7 @@ public final class RegisterFile<E extends Register> {
      * @throws IndexOutOfBoundsException if the bit has a negative or too large index.
      */
     public void setBit(E reg, Bit bit, boolean newValue) {
-        Bits.set(registerValues[reg.index()], bit.index(), newValue);
+        set(reg, (byte)Bits.set(get(reg), bit.index(), newValue));
     }
   
 }

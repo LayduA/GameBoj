@@ -25,13 +25,9 @@ public interface Preconditions {
      * @return v (assuming no exception was thrown)
      * @throws IllegalArgumentException if v is not an 8-bit value.
      */
-    public static int checkBits8(int v) {
-        
-        if (!(v >= 0 && v <= 0xFF)) {
-            throw new IllegalArgumentException();
-        } else {
-            return v;
-        }
+    public static int checkBits8(int v) { 
+        checkArgument(v >= 0 && v <= 0xFF);
+        return v;
     }
     
     /**
@@ -41,12 +37,8 @@ public interface Preconditions {
      * @throws IllegalArgumentException if v is not an 16-bit value.
      */
     public static int checkBits16(int v) {
-        
-        if (!(v >= 0 && v <= 0xFFFF)) {
-            throw new IllegalArgumentException();
-        } else {
-            return v;
-        }
+        checkArgument(v >= 0 && v <= 0xFFFF);
+        return v;
     }
     
     /**

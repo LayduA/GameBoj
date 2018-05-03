@@ -42,6 +42,7 @@ import ch.epfl.gameboj.component.memory.Ram;
 
 /**
  * The computing unit of the Gameboy.
+ * 
  * @author Adrien Laydu, Michael Tasev
  *
  */
@@ -65,6 +66,8 @@ public final class Cpu implements Component, Clocked {
     private int IF = 0;
 
     private boolean IME;
+    
+    private final static int PREFIX = 0xCB; 
 
     private final Ram highRam = new Ram(AddressMap.HIGH_RAM_SIZE);
 
@@ -73,7 +76,7 @@ public final class Cpu implements Component, Clocked {
      * 
      * @see ch.epfl.gameboj.RegisterFile.java
      */
-    private RegisterFile<Reg> bits8registerFile = new RegisterFile<>(
+    private final RegisterFile<Reg> bits8registerFile = new RegisterFile<>(
             Reg.values());
 
     /**
@@ -102,23 +105,27 @@ public final class Cpu implements Component, Clocked {
         VBLANK, LCD_STAT, TIMER, SERIAL, JOYPAD
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see ch.epfl.gameboj.component.Clocked#cycle(long)
      */
     public void cycle(long cycle) {
         if (nextNonIdleCycle == Long.MAX_VALUE && interruptionWaiting()) {
             nextNonIdleCycle = cycle;
             reallyCycle(nextNonIdleCycle);
-            return;
         }
-        if (cycle < nextNonIdleCycle)
-            return;
-        reallyCycle(cycle);
+        else if (cycle >= nextNonIdleCycle) {
+            reallyCycle(cycle);
+        }
+        
     }
 
     /**
      * Runs for one cycle.
-     * @param cycle : the cycle to run.
+     * 
+     * @param cycle
+     *            : the cycle to run.
      */
     public void reallyCycle(long cycle) {
         if (IME && interruptionWaiting()) {
@@ -135,7 +142,7 @@ public final class Cpu implements Component, Clocked {
             // Getting the opcode encoding (or the prefix 0xCB)
             int opcodeEncoding = read8(PC);
 
-            if (opcodeEncoding == 0xCB) {
+            if (opcodeEncoding == PREFIX) {
                 opcodeEncoding = read8AfterOpcode();
                 opcode = PREFIXED_OPCODE_TABLE[opcodeEncoding];
             } else {
@@ -145,7 +152,9 @@ public final class Cpu implements Component, Clocked {
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see ch.epfl.gameboj.component.Component#attachTo(ch.epfl.gameboj.Bus)
      */
     @Override
@@ -154,7 +163,9 @@ public final class Cpu implements Component, Clocked {
         bus.attach(this);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see ch.epfl.gameboj.component.Component#read(int)
      */
     @Override
@@ -162,16 +173,18 @@ public final class Cpu implements Component, Clocked {
         checkBits16(address);
         if (address == AddressMap.REG_IE)
             return IE;
-        if (address == AddressMap.REG_IF)
+        else if (address == AddressMap.REG_IF)
             return IF;
-        if (address >= AddressMap.HIGH_RAM_START
+        else if (address >= AddressMap.HIGH_RAM_START
                 && address < AddressMap.HIGH_RAM_END) {
             return highRam.read(address - AddressMap.HIGH_RAM_START);
         }
         return NO_DATA;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see ch.epfl.gameboj.component.Component#write(int, int)
      */
     @Override
@@ -181,10 +194,10 @@ public final class Cpu implements Component, Clocked {
         if (address == AddressMap.REG_IE) {
             IE = data;
         }
-        if (address == AddressMap.REG_IF) {
+        else if (address == AddressMap.REG_IF) {
             IF = data;
         }
-        if (address >= AddressMap.HIGH_RAM_START
+        else if (address >= AddressMap.HIGH_RAM_START
                 && address < AddressMap.HIGH_RAM_END) {
             highRam.write(address - AddressMap.HIGH_RAM_START, data);
         }
@@ -192,7 +205,9 @@ public final class Cpu implements Component, Clocked {
 
     /**
      * Raises an interruption.
-     * @param i : the interruption to raise.
+     * 
+     * @param i
+     *            : the interruption to raise.
      */
     public void requestInterrupt(Interrupt i) {
         IF = Bits.set(IF, i.index(), true);
@@ -224,7 +239,7 @@ public final class Cpu implements Component, Clocked {
      */
     private static Opcode[] buildOpcodeTable(Opcode.Kind k) {
         final Opcode[] table = new Opcode[0x100];
-    
+
         for (Opcode o : Opcode.values()) {
             if (o.kind == k) {
                 table[o.encoding] = o;
@@ -240,7 +255,7 @@ public final class Cpu implements Component, Clocked {
             Opcode.Kind.DIRECT);
 
     private static final Opcode[] PREFIXED_OPCODE_TABLE = buildOpcodeTable(
-    Opcode.Kind.PREFIXED);
+            Opcode.Kind.PREFIXED);
 
     /**
      * Gets the opcode of the next instruction from the Program Counter, then
@@ -248,129 +263,125 @@ public final class Cpu implements Component, Clocked {
      */
     private void dispatch(Opcode opcode) {
         final int nextPC = clip(16, PC + opcode.totalBytes);
-        //System.out.println(Arrays.toString(_testGetPcSpAFBCDEHL()));
-        //if(opcode!= Opcode.NOP) System.out.println(opcode);
 
         boolean mustIncrement = true;
-        
+
         // Deciding what to do depending on the opcode's family, then do it
         switch (opcode.family) {
         case NOP: {
-            ;
+
         }
             break;
         case LD_R8_HLR: {
             Reg reg = extractReg(opcode, 3);
             setReg(reg, read8AtHl());
-            ;
+
         }
             break;
         case LD_A_HLRU: {
             final int c = extractHlIncrement(opcode);
             setReg(Reg.A, read8AtHl());
             final int newHl = clip(16, reg16(Reg16.HL) + c);
-            setReg(Reg.L, clip(8, newHl));
-            setReg(Reg.H, extract(newHl, 8, 8));
-            ;
+            setReg16(Reg16.HL, newHl);
+
         }
             break;
         case LD_A_N8R: {
             setReg(Reg.A, read8(REGS_START + read8AfterOpcode()));
-            ;
+
         }
             break;
         case LD_A_CR: {
             setReg(Reg.A, read8(REGS_START + getReg(Reg.C)));
-            ;
+
         }
             break;
         case LD_A_N16R: {
             setReg(Reg.A, read8(read16AfterOpcode()));
-            ;
+
         }
             break;
         case LD_A_BCR: {
             setReg(Reg.A, read8(reg16(Reg16.BC)));
-            ;
+
         }
             break;
         case LD_A_DER: {
             setReg(Reg.A, read8(reg16(Reg16.DE)));
-            ;
+
         }
             break;
         case LD_R8_N8: {
             final Reg r = extractReg(opcode, 3);
             setReg(r, read8AfterOpcode());
-            ;
+
         }
             break;
         case LD_R16SP_N16: {
             final int newV = read16AfterOpcode();
             final Reg16 reg = extractReg16(opcode);
             setReg16SP(reg, newV);
-            ;
+
         }
             break;
         case POP_R16: {
             final Reg16 reg = extractReg16(opcode);
             setReg16(reg, pop16());
-            ;
+
         }
             break;
         case LD_HLR_R8: {
             final Reg reg = extractReg(opcode, 0);
             write8AtHl(getReg(reg));
-            ;
+
         }
             break;
         case LD_HLRU_A: {
             write8AtHl(getReg(Reg.A));
             final int c = extractHlIncrement(opcode);
             final int newHl = clip(16, reg16(Reg16.HL) + c);
-            setReg(Reg.L, clip(8, newHl));
-            setReg(Reg.H, extract(newHl, 8, 8));
-            ;
+            setReg16(Reg16.HL, newHl);
+
         }
             break;
         case LD_N8R_A: {
             final int address = read8AfterOpcode() + REGS_START;
             write8(address, getReg(Reg.A));
-            ;
+
         }
             break;
         case LD_CR_A: {
             final int address = getReg(Reg.C) + REGS_START;
             write8(address, getReg(Reg.A));
-            ;
+
         }
             break;
         case LD_N16R_A: {
             final int address = read16AfterOpcode();
             write8(address, getReg(Reg.A));
-            ;
+
         }
             break;
         case LD_BCR_A: {
             final int address = reg16(Reg16.BC);
             write8(address, getReg(Reg.A));
-            ;
+
         }
             break;
         case LD_DER_A: {
             final int address = reg16(Reg16.DE);
             write8(address, getReg(Reg.A));
-            ;
+
         }
             break;
         case LD_HLR_N8: {
             write8AtHl(read8AfterOpcode());
-            ;
+
         }
             break;
         case LD_N16R_SP: {
             write16(read16AfterOpcode(), SP);
-            ;
+
         }
             break;
         case LD_R8_R8: {
@@ -378,19 +389,19 @@ public final class Cpu implements Component, Clocked {
             final Reg reg2 = extractReg(opcode, 0);
             if (reg1 != reg2)
                 setReg(reg1, getReg(reg2));
-            ;
+
         }
             break;
         case LD_SP_HL: {
 
             SP = reg16(Reg16.HL);
-            ;
+
         }
             break;
         case PUSH_R16: {
             final Reg16 reg = extractReg16(opcode);
             push16(reg16(reg));
-            ;
+
         }
             break;
         // Add
@@ -431,7 +442,8 @@ public final class Cpu implements Component, Clocked {
             break;
         case INC_R16SP: {
             final Reg16 reg = extractReg16(opcode);
-            final int valueFlags = add16H((reg == Reg16.AF ? SP : reg16(reg)), 1);
+            final int valueFlags = add16H((reg == Reg16.AF ? SP : reg16(reg)),
+                    1);
             setReg16SP(reg, unpackValue(valueFlags));
 
         }
@@ -446,8 +458,8 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case LD_HLSP_S8: {
-            final int valueFlags = add16L((clip(16, signExtend8(read8AfterOpcode()))),
-                    SP);
+            final int valueFlags = add16L(
+                    (clip(16, signExtend8(read8AfterOpcode()))), SP);
             final int value = unpackValue(valueFlags);
             if (Bits.test(opcode.encoding, 4)) {
                 setReg16(Reg16.HL, value);
@@ -512,8 +524,9 @@ public final class Cpu implements Component, Clocked {
             break;
         case DEC_R16SP: {
             final Reg16 reg = extractReg16(opcode);
-            final int value = (reg == Reg16.AF ? clip(16,SP-1) : clip(16, reg16(reg) - 1));
-            setReg16SP(reg,value);
+            final int value = (reg == Reg16.AF ? clip(16, SP - 1)
+                    : clip(16, reg16(reg) - 1));
+            setReg16SP(reg, value);
         }
             break;
 
@@ -535,7 +548,7 @@ public final class Cpu implements Component, Clocked {
         }
             break;
         case OR_A_R8: {
-            final  Reg reg = extractReg(opcode, 0);
+            final Reg reg = extractReg(opcode, 0);
             final int valueFlags = or(getReg(Reg.A), getReg(reg));
             setRegFlags(Reg.A, valueFlags);
         }
@@ -766,7 +779,7 @@ public final class Cpu implements Component, Clocked {
             if (extractCondition(opcode)) {
                 push16(nextPC);
                 nextNonIdleCycle += opcode.additionalCycles;
-                
+
                 PC = read16AfterOpcode();
                 mustIncrement = false;
             }
@@ -1096,5 +1109,5 @@ public final class Cpu implements Component, Clocked {
         final int index = Integer.lowestOneBit(temp);
         return Integer.SIZE - Integer.numberOfLeadingZeros(index) - 1;
     }
-    
+
 }

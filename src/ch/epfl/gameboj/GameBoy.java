@@ -52,11 +52,11 @@ public final class GameBoy implements AddressMap{
         final BootRomController BRC = new BootRomController(cartridge);
         
         //Attaching our components.
-        bus.attach(ramController);
-        bus.attach(echoRamController);
+        ramController.attachTo(bus);
+        echoRamController.attachTo(bus);
         
-        bus.attach(BRC);
-        bus.attach(timer);
+        BRC.attachTo(bus);
+        timer.attachTo(bus);
         
         cpu.attachTo(bus);
         lcdController.attachTo(bus);
@@ -70,10 +70,10 @@ public final class GameBoy implements AddressMap{
      */
     public void runUntil(long cycle) {
         Preconditions.checkArgument(cycles<=cycle);
-        for(int i = cycles; i<cycle;i++) {
-            timer.cycle(i);
-            cpu.cycle(i);
-            lcdController.cycle(i);
+        while(cycles < cycle) {
+            timer.cycle(cycles);
+            cpu.cycle(cycles);
+            lcdController.cycle(cycles);
             cycles+=1;
         }
     }

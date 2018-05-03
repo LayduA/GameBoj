@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public final class Rom {
 
-    private byte[] romData;
+    private final byte[] romData;
 
     /**
      * Constructs a rom with the given data array.

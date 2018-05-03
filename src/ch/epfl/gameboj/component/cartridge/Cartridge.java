@@ -18,7 +18,7 @@ import ch.epfl.gameboj.component.memory.Rom;
 
 public final class Cartridge implements Component{
     
-    private Component mbController;
+    private final Component mbController;
     
     private static final int ROM_SIZE = 0x8000;
     private static final int MBC_TYPE_ADDRESS = 0x147;
