@@ -124,8 +124,6 @@ public final class LcdController implements Component, Clocked {
      * @see ch.epfl.gameboj.component.Component#write(int, int)
      */
     public void write(int address, int data) {
-        if (address == 0xFF41)
-            System.out.println(data);
         Preconditions.checkBits16(address);
         Preconditions.checkBits8(data);
         if (address >= AddressMap.REGS_LCDC_START
