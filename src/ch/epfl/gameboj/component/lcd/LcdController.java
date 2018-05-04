@@ -41,11 +41,13 @@ public final class LcdController implements Component, Clocked {
     private LcdImage currentImage;
 
     private int copySource;
-    private int copyDest;
+    
 
     private final Ram videoRam = new Ram(AddressMap.VIDEO_RAM_SIZE);
     private final Ram objectRam = new Ram(AddressMap.OAM_RAM_SIZE);
 
+    private int copyDest= objectRam.size();
+    
     private enum LcdReg implements Register {
         LCDC, STAT, SCY, SCX, LY, LYC, DMA, BGP, OBP0, OBP1, WY, WX
     }
@@ -157,7 +159,7 @@ public final class LcdController implements Component, Clocked {
                 return;
             case DMA:
                 file.set(reg, data);
-                copySource = data;
+                copySource = data<<8;
                 copyDest = 0;
                 break;
             default:
@@ -189,7 +191,7 @@ public final class LcdController implements Component, Clocked {
             return;
         }
 
-        if (copyDest < objectRam.size()) {
+        if (copyDest != objectRam.size()) {
             objectRam.write(copyDest, bus.read(copySource));
             copyDest++;
             copySource++;
@@ -292,7 +294,7 @@ public final class LcdController implements Component, Clocked {
         final LcdImageLine winLine = computeWinLine(winY);
         // System.out.println(wx);
 
-        return bgLine.join(winLine, LCD_WIDTH - 1 - wx);
+        return bgLine.join(winLine, LCD_WIDTH - 1 - wx).below(spritesLine);
 
     }
 
@@ -350,10 +352,10 @@ public final class LcdController implements Component, Clocked {
         if (sprites != null) {
             for (int i = 0; i < sprites.length; i++) {
                 line = individualSpriteLine(sprites[i],
-                        (index - objectRam.read(sprites[i])) + 8);
+                        (index - objectRam.read(sprites[i])) + 8).below(line);
             }
         }
-        return EMPTY_LINE;
+        return line;
     }
 
     private int getLineFromTile(int tileIndex, int lineIndex,
@@ -402,7 +404,7 @@ public final class LcdController implements Component, Clocked {
         int tileIndex = 0;
         while (count < 10 && tileIndex < AddressMap.OAM_RAM_SIZE - 3) {
             int yCoord = objectRam.read(tileIndex);
-            if (index >= yCoord - 8 && index < yCoord) {
+            if (index >= yCoord-8 && index < yCoord) {
 
                 tiles[count] = objectRam.read(tileIndex + 1) << 8 | tileIndex;
                 count++;
@@ -432,7 +434,7 @@ public final class LcdController implements Component, Clocked {
         int strongBits = getLineFromTile(tile, (2 * lineIndex) + 1, true);
         builder.setBytes(0, strongBits, weakBits);
         return builder.build().mapColors(colors)
-                .shift(objectRam.read(tileNumber + 1));
+                .shift(objectRam.read(tileNumber + 1)-8);
     }
 
 }
