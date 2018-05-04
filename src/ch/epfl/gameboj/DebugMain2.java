@@ -14,7 +14,7 @@ public final class DebugMain2 {
             0xA9_A9_A9, 0x00_00_00 };
 
     public static void main(String[] args) throws IOException {
-        File romFile = new File("tetris.gb");
+        File romFile = new File("tasmaniaStory.gb");
         long cycles = Long.parseLong("30000000");
 
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));

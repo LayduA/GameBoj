@@ -6,6 +6,7 @@ import ch.epfl.gameboj.Register;
 import ch.epfl.gameboj.RegisterFile;
 import ch.epfl.gameboj.bits.Bit;
 import ch.epfl.gameboj.component.cpu.Cpu;
+import ch.epfl.gameboj.component.cpu.Cpu.Interrupt;
 import ch.epfl.gameboj.bits.Bits;
 
 public class Joypad implements Component {
@@ -13,34 +14,58 @@ public class Joypad implements Component {
     private int line0;
     private int line1;
     private Cpu cpu;
+    
+    private int P1;
 
     public enum Key implements Bit {
         RIGHT, LEFT, UP, DOWN, A, B, SELECT, START
     }
-
-    public enum Reg implements Register {
-        REG_P1
-    }
-
-    RegisterFile<Reg> file = new RegisterFile<Reg>(Reg.values());
-
+    
     public Joypad(Cpu cpu) {
         this.cpu = cpu;
     }
 
-    public boolean keyPressed(Key k) {
-        return false;
+    public void keyPressed(Key k) {
+        System.out.println(Integer.toBinaryString(P1));
+        System.out.println(k);
+        int index = k.index();
+        if(index <4 && !Bits.test(P1, 4)) {
+            line0 = setLine(index);
+            
+            cpu.requestInterrupt(Interrupt.JOYPAD);
+        }
+        else if (index >=4 && !Bits.test(P1, 5)){
+            System.out.println(k);
+            line1 = setLine(index-4);
+            cpu.requestInterrupt(Interrupt.JOYPAD);
+            System.out.println(line1);
+        }
+        System.out.println(line0|line1);
+        P1 = Bits.complement8(line0|line1);
+        System.out.println(Integer.toBinaryString(P1));
     }
 
-    public boolean keyReleased(Key k) {
-        return false;
+    public void keyReleased(Key k) {
+        int index = k.index();
+        if(index <4 && !Bits.test(P1, 4)) {
+            line0 = Bits.set(line0, index, false);
+        }
+        else if (index >=4 && !Bits.test(P1, 5)){
+            line1 = Bits.set(line1, index-4, false);
+        }
+        P1 = Bits.complement8(line0|line1);
+        System.out.println("j " +Integer.toBinaryString(P1));
+    }
+    
+    private int setLine(int i) {
+        return Bits.set(0, i, true);
     }
 
     @Override
     public int read(int address) {
         Preconditions.checkBits16(address);
         if (address == AddressMap.REG_P1) {
-            return Bits.complement8(file.get(Reg.values()[0]));
+            return Bits.complement8(P1);
         }
         return NO_DATA;
     }
@@ -50,9 +75,9 @@ public class Joypad implements Component {
         Preconditions.checkBits16(address);
         Preconditions.checkBits8(data);
         if (address == AddressMap.REG_P1) {
-            final int value = file.get(Reg.REG_P1);
+            final int value = P1;
             final int newValue = Bits.extract(data, 3, 5);
-            file.set(Reg.REG_P1, Bits.clip(3, value) | (newValue << 3));
+            P1 =  Bits.complement8(Bits.clip(3, value) | (newValue << 3));
         }
 
     }

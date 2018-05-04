@@ -37,7 +37,7 @@ public final class LcdController implements Component, Clocked {
     private long nextNonIdleCycle = Long.MAX_VALUE;
     private Cpu cpu;
 
-    private LcdImage.Builder nextImageBuilder;
+    private LcdImage.Builder nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);;
     private LcdImage currentImage;
 
     private int copySource;
@@ -206,7 +206,7 @@ public final class LcdController implements Component, Clocked {
 
     private void reallyCycle(long cycle) {
 
-        if (file.get(LcdReg.LY) == 0) {
+        if (file.get(LcdReg.LY) == 153) {
             nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);
             winY = 0;
         }
@@ -283,7 +283,7 @@ public final class LcdController implements Component, Clocked {
     private LcdImageLine computeLine(int index, int shiftX) {
         final LcdImageLine bgLine = computeBGLine(index, shiftX);
         final int wx = file.get(LcdReg.WX) - 7;
-        final LcdImageLine spritesLine = computeSpritesLine(index);
+        final LcdImageLine spritesLine = computeSpritesLine((index+8)%144);
 
         if (index < file.get(LcdReg.WY) || wx < 0 || wx >= 160
                 || !testInReg(LcdReg.LCDC, LCDC.WIN)) {
