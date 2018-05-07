@@ -1,5 +1,6 @@
 package ch.epfl.gameboj;
 
+import ch.epfl.gameboj.component.Joypad.Key;
 import ch.epfl.gameboj.component.cartridge.Cartridge;
 import ch.epfl.gameboj.component.lcd.LcdController;
 import ch.epfl.gameboj.component.lcd.LcdImage;
