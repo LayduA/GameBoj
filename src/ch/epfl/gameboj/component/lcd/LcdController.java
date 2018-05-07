@@ -438,8 +438,9 @@ public final class LcdController implements Component, Clocked {
         if (count == 0) {
             return null;
         }
-        Arrays.sort(tiles, 0, count - 1);
+        Arrays.sort(tiles, 0, count);
         final int[] tilesIndexes = new int[count];
+        
         for (int i = 0; i < count; i++) {
             tilesIndexes[i] = Bits.clip(8, tiles[i]);
         }
