@@ -37,17 +37,17 @@ public final class LcdController implements Component, Clocked {
     private long nextNonIdleCycle = Long.MAX_VALUE;
     private Cpu cpu;
 
-    private LcdImage.Builder nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);;
+    private LcdImage.Builder nextImageBuilder = new LcdImage.Builder(LCD_WIDTH,
+            LCD_HEIGHT);;
     private LcdImage currentImage;
 
     private int copySource;
-    
 
     private final Ram videoRam = new Ram(AddressMap.VIDEO_RAM_SIZE);
     private final Ram objectRam = new Ram(AddressMap.OAM_RAM_SIZE);
 
-    private int copyDest= objectRam.size();
-    
+    private int copyDest = objectRam.size();
+
     private enum LcdReg implements Register {
         LCDC, STAT, SCY, SCX, LY, LYC, DMA, BGP, OBP0, OBP1, WY, WX
     }
@@ -159,7 +159,7 @@ public final class LcdController implements Component, Clocked {
                 return;
             case DMA:
                 file.set(reg, data);
-                copySource = data<<8;
+                copySource = data << 8;
                 copyDest = 0;
                 break;
             default:
@@ -281,20 +281,28 @@ public final class LcdController implements Component, Clocked {
     }
 
     private LcdImageLine computeLine(int index, int shiftX) {
-        final LcdImageLine bgLine = computeBGLine(index, shiftX);
+        LcdImageLine bgLine = computeBGLine(index, shiftX);
+
         final int wx = file.get(LcdReg.WX) - 7;
-        final LcdImageLine spritesLine = computeSpritesLine((index+8)%144);
-
-        if (index < file.get(LcdReg.WY) || wx < 0 || wx >= 160
-                || !testInReg(LcdReg.LCDC, LCDC.WIN)) {
-            return (testInReg(LcdReg.LCDC, LCDC.OBJ) ? bgLine.below(spritesLine)
-                    : bgLine);
+        final LcdImageLine spritesFrontLine = computeSpritesLine(
+                (index + 8) % 144, spritesFrontOrBack(index+8,true));
+        final LcdImageLine spritesBackLine = computeSpritesLine(
+                (index + 8) % 144, spritesFrontOrBack(index+8,false));
+        if (!(index < file.get(LcdReg.WY) || wx < 0 || wx >= 160
+                || !testInReg(LcdReg.LCDC, LCDC.WIN))) {
+            final LcdImageLine winLine = computeWinLine(winY);
+            bgLine = bgLine.join(winLine, LCD_WIDTH - 1 - wx);
         }
+        if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
+            if (spritesBackLine != null) {
+                bgLine = spritesBackLine.below(bgLine);
+            }
+            if (spritesFrontLine != null) {
+                bgLine = bgLine.below(spritesFrontLine);
+            }
 
-        final LcdImageLine winLine = computeWinLine(winY);
-        // System.out.println(wx);
-
-        return bgLine.join(winLine, LCD_WIDTH - 1 - wx).below(spritesLine);
+        }
+        return bgLine;
 
     }
 
@@ -346,8 +354,7 @@ public final class LcdController implements Component, Clocked {
 
     }
 
-    private LcdImageLine computeSpritesLine(int index) {
-        int[] sprites = spritesIntersectingLine(index);
+    private LcdImageLine computeSpritesLine(int index, int[] sprites) {
         LcdImageLine line = EMPTY_LINE;
         if (sprites != null) {
             for (int i = 0; i < sprites.length; i++) {
@@ -398,13 +405,32 @@ public final class LcdController implements Component, Clocked {
         file.setBit(reg, index, newBitValue);
     }
 
+    private int[] spritesFrontOrBack(int index, boolean front) {
+        int[] spritesOnLine = spritesIntersectingLine(index);
+        if (spritesOnLine == null)
+            return null;
+        int[] spritesLine = new int[spritesOnLine.length];
+        int count = 0;
+        for (int i : spritesOnLine) {
+            if (Bits.test(objectRam.read(i + 3),
+                    Sprite.BEHIND_BG) == !front) {
+                spritesLine[count] = i;
+                count++;
+            }
+        }
+        return Arrays.copyOf(spritesLine, count);
+    }
+ 
+
     private int[] spritesIntersectingLine(int index) {
         int[] tiles = new int[10];
         int count = 0;
         int tileIndex = 0;
         while (count < 10 && tileIndex < AddressMap.OAM_RAM_SIZE - 3) {
             int yCoord = objectRam.read(tileIndex);
-            if (index >= yCoord-8 && index < yCoord) {
+            if (index >= yCoord
+                    - (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)
+                    && index < yCoord) {
 
                 tiles[count] = objectRam.read(tileIndex + 1) << 8 | tileIndex;
                 count++;
@@ -432,9 +458,13 @@ public final class LcdController implements Component, Clocked {
         int tile = objectRam.read(tileNumber + 2);
         int weakBits = getLineFromTile(tile, 2 * lineIndex, true);
         int strongBits = getLineFromTile(tile, (2 * lineIndex) + 1, true);
+        if (Bits.test(objectRam.read(tileNumber + 3), Sprite.FLIP_H)) {
+            weakBits = Bits.reverse8(weakBits);
+            strongBits = Bits.reverse8(strongBits);
+        }
         builder.setBytes(0, strongBits, weakBits);
         return builder.build().mapColors(colors)
-                .shift(objectRam.read(tileNumber + 1)-8);
+                .shift(objectRam.read(tileNumber + 1) - 8);
     }
 
 }
