@@ -21,7 +21,7 @@ public final class GameBoy implements AddressMap {
 
     public static final long CYCLE_PER_SECOND = 1L << 20;
     public static final double CYCLE_PER_NANOSECOND = (double) CYCLE_PER_SECOND
-            / (double) Math.pow(10, 9);
+            / (double)1e9;
 
     private final Bus bus;
     private final Cpu cpu;

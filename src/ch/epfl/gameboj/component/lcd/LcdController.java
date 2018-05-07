@@ -275,8 +275,8 @@ public final class LcdController implements Component, Clocked {
     }
 
     private int getMode() {
-        int strongBit = testInReg(LcdReg.STAT, STAT.MODE1) ? 1 : 0;
-        int weakBit = testInReg(LcdReg.STAT, STAT.MODE0) ? 1 : 0;
+        final int strongBit = testInReg(LcdReg.STAT, STAT.MODE1) ? 1 : 0;
+        final int weakBit = testInReg(LcdReg.STAT, STAT.MODE0) ? 1 : 0;
         return strongBit << 1 | weakBit;
     }
 
@@ -284,16 +284,17 @@ public final class LcdController implements Component, Clocked {
         LcdImageLine bgLine = computeBGLine(index, shiftX);
 
         final int wx = file.get(LcdReg.WX) - 7;
-        final LcdImageLine spritesFrontLine = computeSpritesLine(
-                (index + 8) % 144, spritesFrontOrBack(index+8,true));
-        final LcdImageLine spritesBackLine = computeSpritesLine(
-                (index + 8) % 144, spritesFrontOrBack(index+8,false));
+
         if (!(index < file.get(LcdReg.WY) || wx < 0 || wx >= 160
                 || !testInReg(LcdReg.LCDC, LCDC.WIN))) {
             final LcdImageLine winLine = computeWinLine(winY);
             bgLine = bgLine.join(winLine, LCD_WIDTH - 1 - wx);
         }
         if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
+            final LcdImageLine spritesFrontLine = computeSpritesLine(
+                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)), true);
+            final LcdImageLine spritesBackLine = computeSpritesLine(
+                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)), false);
             if (spritesBackLine != null) {
                 bgLine = spritesBackLine.below(bgLine);
             }
@@ -354,12 +355,25 @@ public final class LcdController implements Component, Clocked {
 
     }
 
-    private LcdImageLine computeSpritesLine(int index, int[] sprites) {
+    private LcdImageLine computeSpritesLine(int index,boolean front) {
+        int[] spritesOnLine = spritesIntersectingLine(index);
+        if (spritesOnLine == null)
+            return null;
+        int[] spritesLine = new int[spritesOnLine.length];
+        int count = 0;
+        for (int i : spritesOnLine) {
+            if (Bits.test(objectRam.read(i + 3),
+                    Sprite.BEHIND_BG) == !front) {
+                spritesLine[count] = i;
+                count++;
+            }
+        }
+        int[] spritesToUse = Arrays.copyOf(spritesLine, count);
         LcdImageLine line = EMPTY_LINE;
-        if (sprites != null) {
-            for (int i = 0; i < sprites.length; i++) {
-                line = individualSpriteLine(sprites[i],
-                        (index - objectRam.read(sprites[i])) + 8).below(line);
+        if (spritesToUse != null) {
+            for (int i = 0; i < spritesToUse.length; i++) {
+                line = (individualSpriteLine(spritesToUse[i],
+                        (index - objectRam.read(spritesToUse[i])) + 8)).below(line);
             }
         }
         return line;
@@ -404,24 +418,7 @@ public final class LcdController implements Component, Clocked {
     private void setInReg(LcdReg reg, Bit index, boolean newBitValue) {
         file.setBit(reg, index, newBitValue);
     }
-
-    private int[] spritesFrontOrBack(int index, boolean front) {
-        int[] spritesOnLine = spritesIntersectingLine(index);
-        if (spritesOnLine == null)
-            return null;
-        int[] spritesLine = new int[spritesOnLine.length];
-        int count = 0;
-        for (int i : spritesOnLine) {
-            if (Bits.test(objectRam.read(i + 3),
-                    Sprite.BEHIND_BG) == !front) {
-                spritesLine[count] = i;
-                count++;
-            }
-        }
-        return Arrays.copyOf(spritesLine, count);
-    }
  
-
     private int[] spritesIntersectingLine(int index) {
         int[] tiles = new int[10];
         int count = 0;
@@ -456,8 +453,11 @@ public final class LcdController implements Component, Clocked {
                         ? LcdReg.OBP1
                         : LcdReg.OBP0);
         int tile = objectRam.read(tileNumber + 2);
-        int weakBits = getLineFromTile(tile, 2 * lineIndex, true);
-        int strongBits = getLineFromTile(tile, (2 * lineIndex) + 1, true);
+        int oppositeLine = testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 15-lineIndex : 7-lineIndex;
+        int weakBitsTileLine = Bits.test(objectRam.read(tileNumber+3), Sprite.FLIP_V) ? 2 * oppositeLine : 2*lineIndex ;
+        int strongBitsTileLine = Bits.test(objectRam.read(tileNumber+3), Sprite.FLIP_V) ? 2 * oppositeLine +1 : 2*lineIndex+1 ;
+        int weakBits = getLineFromTile(tile, weakBitsTileLine, true);
+        int strongBits = getLineFromTile(tile, strongBitsTileLine, true);
         if (Bits.test(objectRam.read(tileNumber + 3), Sprite.FLIP_H)) {
             weakBits = Bits.reverse8(weakBits);
             strongBits = Bits.reverse8(strongBits);
