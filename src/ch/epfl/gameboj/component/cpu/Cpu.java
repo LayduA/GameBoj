@@ -245,6 +245,9 @@ public final class Cpu implements Component, Clocked {
                 table[o.encoding] = o;
             }
         }
+        for(int i = 0; i<table.length;i++) {
+            if(table[i] == null) System.out.println(i);
+        }
         return table;
     }
 
