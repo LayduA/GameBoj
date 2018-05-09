@@ -26,8 +26,8 @@ public class Main extends Application {
 
     private static Map<KeyCode, Key> keymap = Map.of(KeyCode.A, Key.A,
             KeyCode.B, Key.B,
-            KeyCode.S, Key.SELECT, 
-            KeyCode.SPACE, Key.START,
+            KeyCode.SPACE, Key.SELECT, 
+            KeyCode.S, Key.START,
             KeyCode.LEFT,Key.LEFT,
             KeyCode.RIGHT,Key.RIGHT,
             KeyCode.UP,Key.UP,
@@ -41,7 +41,7 @@ public class Main extends Application {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
         }
-        File romFile = new File("tetris.gb");
+        File romFile = new File("supermarioland2.gb");
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
         ImageView imageView = new ImageView();
         imageView.setFitWidth(2 * LCD_WIDTH);

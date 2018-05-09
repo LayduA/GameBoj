@@ -136,11 +136,9 @@ public final class LcdController implements Component, Clocked {
             case LCDC:
                 if (!Bits.test(data, LCDC.LCD_STATUS)) {
                     setMode(0);
-                    if (testInReg(LcdReg.STAT, STAT.INT_MODE0)) {
-                        cpu.requestInterrupt(Interrupt.LCD_STAT);
-                    }
                     modifyLYLYC(LcdReg.LY, 0);
                     nextNonIdleCycle = Long.MAX_VALUE;
+                    file.set(reg, data);
                 } else {
                     file.set(reg, data);
                 }
@@ -156,7 +154,7 @@ public final class LcdController implements Component, Clocked {
                 modifyLYLYC(reg, data);
                 break;
             case LY:
-                return;
+                break;
             case DMA:
                 file.set(reg, data);
                 copySource = data << 8;
@@ -184,6 +182,13 @@ public final class LcdController implements Component, Clocked {
      * @see ch.epfl.gameboj.component.Clocked#cycle(long)
      */
     public void cycle(long cycle) {
+        if (copyDest != objectRam.size()) {
+            objectRam.write(copyDest, bus.read(copySource));
+            copyDest++;
+            copySource++;
+        }
+
+        
         if (nextNonIdleCycle == Long.MAX_VALUE
                 && testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
             nextNonIdleCycle = cycle;
@@ -191,12 +196,7 @@ public final class LcdController implements Component, Clocked {
             return;
         }
 
-        if (copyDest != objectRam.size()) {
-            objectRam.write(copyDest, bus.read(copySource));
-            copyDest++;
-            copySource++;
-        }
-
+        
         if (cycle < nextNonIdleCycle
                 || !testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
             return;
@@ -227,6 +227,7 @@ public final class LcdController implements Component, Clocked {
 
             nextImageBuilder.setLine(file.get(LcdReg.LY),
                     computeLine(file.get(LcdReg.LY), shiftX));
+
             nextNonIdleCycle += 43;
             break;
         case 3:
@@ -243,7 +244,6 @@ public final class LcdController implements Component, Clocked {
                 setMode(1);
                 cpu.requestInterrupt(Interrupt.VBLANK);
                 currentImage = nextImageBuilder.build();
-
                 nextNonIdleCycle += 114;
             }
             break;
@@ -292,9 +292,11 @@ public final class LcdController implements Component, Clocked {
         }
         if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
             final LcdImageLine spritesFrontLine = computeSpritesLine(
-                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)), true);
+                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)),
+                    true);
             final LcdImageLine spritesBackLine = computeSpritesLine(
-                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)), false);
+                    (index + (testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 16 : 8)),
+                    false);
             if (spritesBackLine != null) {
                 bgLine = spritesBackLine.below(bgLine);
             }
@@ -340,7 +342,6 @@ public final class LcdController implements Component, Clocked {
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
         final int shiftY = file.get(LcdReg.SCY);
-        // System.out.println("SCX = " + file.get(LcdReg.SCX));
         return computeWinOrBGLine(index, dataStart, shiftX, shiftY);
     }
 
@@ -355,15 +356,14 @@ public final class LcdController implements Component, Clocked {
 
     }
 
-    private LcdImageLine computeSpritesLine(int index,boolean front) {
+    private LcdImageLine computeSpritesLine(int index, boolean front) {
         int[] spritesOnLine = spritesIntersectingLine(index);
         if (spritesOnLine == null)
             return null;
         int[] spritesLine = new int[spritesOnLine.length];
         int count = 0;
         for (int i : spritesOnLine) {
-            if (Bits.test(objectRam.read(i + 3),
-                    Sprite.BEHIND_BG) == !front) {
+            if (Bits.test(objectRam.read(i + 3), Sprite.BEHIND_BG) == !front) {
                 spritesLine[count] = i;
                 count++;
             }
@@ -373,7 +373,8 @@ public final class LcdController implements Component, Clocked {
         if (spritesToUse != null) {
             for (int i = 0; i < spritesToUse.length; i++) {
                 line = (individualSpriteLine(spritesToUse[i],
-                        (index - objectRam.read(spritesToUse[i])) + 8)).below(line);
+                        (index - objectRam.read(spritesToUse[i])) + 8))
+                                .below(line);
             }
         }
         return line;
@@ -401,13 +402,11 @@ public final class LcdController implements Component, Clocked {
     private void modifyLYLYC(LcdReg reg, int data) {
         final LcdReg other = (reg == LcdReg.LY ? LcdReg.LYC : LcdReg.LY);
         final int otherValue = file.get(other);
-        // System.out.println(file.get(LcdReg.LYC));
         if (data == otherValue && testInReg(LcdReg.STAT, STAT.INT_LYC)) {
             cpu.requestInterrupt(Interrupt.LCD_STAT);
         }
         setInReg(LcdReg.STAT, STAT.LYC_EQ_LY, otherValue == data);
-        // if(testInReg(LcdReg.STAT, STAT.LYC_EQ_LY))
-        // System.out.println(file.get(LcdReg.LY));
+
         file.set(reg, data);
     }
 
@@ -418,7 +417,7 @@ public final class LcdController implements Component, Clocked {
     private void setInReg(LcdReg reg, Bit index, boolean newBitValue) {
         file.setBit(reg, index, newBitValue);
     }
- 
+
     private int[] spritesIntersectingLine(int index) {
         int[] tiles = new int[10];
         int count = 0;
@@ -440,7 +439,7 @@ public final class LcdController implements Component, Clocked {
         }
         Arrays.sort(tiles, 0, count);
         final int[] tilesIndexes = new int[count];
-        
+
         for (int i = 0; i < count; i++) {
             tilesIndexes[i] = Bits.clip(8, tiles[i]);
         }
@@ -454,9 +453,13 @@ public final class LcdController implements Component, Clocked {
                         ? LcdReg.OBP1
                         : LcdReg.OBP0);
         int tile = objectRam.read(tileNumber + 2);
-        int oppositeLine = testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE) ? 15-lineIndex : 7-lineIndex;
-        int weakBitsTileLine = Bits.test(objectRam.read(tileNumber+3), Sprite.FLIP_V) ? 2 * oppositeLine : 2*lineIndex ;
-        int strongBitsTileLine = Bits.test(objectRam.read(tileNumber+3), Sprite.FLIP_V) ? 2 * oppositeLine +1 : 2*lineIndex+1 ;
+        int oppositeLine = testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE)
+                ? 15 - lineIndex
+                : 7 - lineIndex;
+        int weakBitsTileLine = Bits.test(objectRam.read(tileNumber + 3),
+                Sprite.FLIP_V) ? 2 * oppositeLine : 2 * lineIndex;
+        int strongBitsTileLine = Bits.test(objectRam.read(tileNumber + 3),
+                Sprite.FLIP_V) ? 2 * oppositeLine + 1 : 2 * lineIndex + 1;
         int weakBits = getLineFromTile(tile, weakBitsTileLine, true);
         int strongBits = getLineFromTile(tile, strongBitsTileLine, true);
         if (Bits.test(objectRam.read(tileNumber + 3), Sprite.FLIP_H)) {
