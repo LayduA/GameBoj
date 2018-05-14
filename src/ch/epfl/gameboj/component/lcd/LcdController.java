@@ -188,7 +188,6 @@ public final class LcdController implements Component, Clocked {
             copySource++;
         }
 
-        
         if (nextNonIdleCycle == Long.MAX_VALUE
                 && testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
             nextNonIdleCycle = cycle;
@@ -196,7 +195,6 @@ public final class LcdController implements Component, Clocked {
             return;
         }
 
-        
         if (cycle < nextNonIdleCycle
                 || !testInReg(LcdReg.LCDC, LCDC.LCD_STATUS)) {
             return;
@@ -313,23 +311,21 @@ public final class LcdController implements Component, Clocked {
             int shiftX, int shiftY) {
         LcdImageLine.Builder lineBuilder = new LcdImageLine.Builder(256);
 
-        final int startTileLine = (((index + shiftY) % 256) / 8);
+        final int startTileLine = (((index + shiftY)) / 8);
         final int startTile = startTileLine * 32;
 
-        final int lineIndex = index % 8;
-
-        boolean tileSource;
+        final int lineIndex = (index+shiftY) % 8;
+        
         for (int i = 0; i < 32; i++) {
             int tileIndex = read((i + startTile) + dataStart);
-            tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
-            int strongBits = getLineFromTile(tileIndex, (2 * lineIndex) + 1,
-                    tileSource);
-            int weakBits = getLineFromTile(tileIndex, 2 * lineIndex,
-                    tileSource);
+            boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
+            int strongBits = getLineFromTile(tileIndex, lineIndex, tileSource,
+                    true);
+            int weakBits = getLineFromTile(tileIndex, lineIndex, tileSource,
+                    false);
             lineBuilder.setBytes(i, strongBits, weakBits);
         }
         LcdImageLine l = lineBuilder.build();
-        // System.out.println(l.lsb());
 
         return l.mapColors(file.get(LcdReg.BGP)).extractWrapped(shiftX,
                 LCD_WIDTH);
@@ -381,10 +377,10 @@ public final class LcdController implements Component, Clocked {
     }
 
     private int getLineFromTile(int tileIndex, int lineIndex,
-            boolean condition) {
+            boolean secondArea, boolean strongBits) {
         int address;
         Preconditions.checkBits8(tileIndex);
-        if (condition) {
+        if (secondArea) {
 
             address = AddressMap.TILE_SOURCE[1] + tileIndex * 16;
         } else {
@@ -396,7 +392,8 @@ public final class LcdController implements Component, Clocked {
 
         }
 
-        return Bits.reverse8(read(address + lineIndex));
+        return strongBits ? Bits.reverse8(read(address + 2 * lineIndex + 1))
+                : Bits.reverse8(read(address + 2 * lineIndex ));
     }
 
     private void modifyLYLYC(LcdReg reg, int data) {
@@ -456,12 +453,10 @@ public final class LcdController implements Component, Clocked {
         int oppositeLine = testInReg(LcdReg.LCDC, LCDC.OBJ_SIZE)
                 ? 15 - lineIndex
                 : 7 - lineIndex;
-        int weakBitsTileLine = Bits.test(objectRam.read(tileNumber + 3),
-                Sprite.FLIP_V) ? 2 * oppositeLine : 2 * lineIndex;
-        int strongBitsTileLine = Bits.test(objectRam.read(tileNumber + 3),
-                Sprite.FLIP_V) ? 2 * oppositeLine + 1 : 2 * lineIndex + 1;
-        int weakBits = getLineFromTile(tile, weakBitsTileLine, true);
-        int strongBits = getLineFromTile(tile, strongBitsTileLine, true);
+        int bitsTileLineIndex = Bits.test(objectRam.read(tileNumber + 3),
+                Sprite.FLIP_V) ? oppositeLine : lineIndex;
+        int weakBits = getLineFromTile(tile, bitsTileLineIndex, true, false);
+        int strongBits = getLineFromTile(tile, bitsTileLineIndex, true, true);
         if (Bits.test(objectRam.read(tileNumber + 3), Sprite.FLIP_H)) {
             weakBits = Bits.reverse8(weakBits);
             strongBits = Bits.reverse8(strongBits);
