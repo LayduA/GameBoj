@@ -35,18 +35,18 @@ class LcdImageLineTest {
                 result3.lsb().toString());
     }
 
-    @Test
-    void equalsAndHashCodeWork() {
-        BitVector msb = new BitVector(4 * 32, true);
-        BitVector lsb = new BitVector(4 * 32);
-        BitVector opa = BitVector.rand();
-        BitVector msb2 = new BitVector(4 * 32, true);
-        LcdImageLine line1 = new LcdImageLine(msb, lsb, opa);
-        LcdImageLine line2 = new LcdImageLine(msb2, new BitVector(lsb),
-                new BitVector(opa));
-        assertTrue(msb.equals(msb2));
-        assertEquals(line1.hashCode(), line2.hashCode());
-    }
+//    @Test
+//    void equalsAndHashCodeWork() {
+//        BitVector msb = new BitVector(4 * 32, true);
+//        BitVector lsb = new BitVector(4 * 32);
+//        BitVector opa = BitVector.rand();
+//        BitVector msb2 = new BitVector(4 * 32, true);
+//        LcdImageLine line1 = new LcdImageLine(msb, lsb, opa);
+//        LcdImageLine line2 = new LcdImageLine(msb2, new BitVector(lsb),
+//                new BitVector(opa));
+//        assertTrue(msb.equals(msb2));
+//        assertEquals(line1.hashCode(), line2.hashCode());
+//    }
 
     public static BitVector v0 = new BitVector(32, false);
     public static BitVector v1 = new BitVector(32, true);

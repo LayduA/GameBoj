@@ -6,6 +6,7 @@ import java.util.Objects;
 
 /** 
  * Different methods of bits manipulation.
+ * 
  * @author Adrien Laydu, Michael Tasev
  *
  */

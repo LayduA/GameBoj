@@ -11,6 +11,7 @@ import static ch.epfl.gameboj.Preconditions.*;
 
 /**
  * The Arithmetic and Logic Unit of the Gameboy.
+ * 
  * @author Adrien Laydu, Michael Tasev
  *
  */
