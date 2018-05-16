@@ -41,7 +41,7 @@ public class Main extends Application {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
         }
-        File romFile = new File("supermarioland2.gb");
+        File romFile = new File("donkeykong.gb");
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
         ImageView imageView = new ImageView();
         imageView.setFitWidth(2 * LCD_WIDTH);
