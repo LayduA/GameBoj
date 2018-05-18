@@ -257,12 +257,12 @@ public final class BitVector {
         }
         
         /**
-         * Sets the byte at the index given with the 8-bit value given.
+         * Sets the given byte at the given index of the bit vector.
          * @param index : the index of the byte to set.
          * @param value : the 8-bit value to set.
-         * @return 
-         * @throws IllegalStateException if 
-         * @throws IndexOutOfBoundsException if the index is bigger than the number of bytes in the bit vector.
+         * @return the builder with the byte value changed.
+         * @throws IllegalStateException if the builder is building when the method is called.
+         * @throws IndexOutOfBoundsException if the index is bigger than the number of bytes composing the bit vector.
          * @throws IllegalArgumentException if value is not an 8-bit value.
          */
         public Builder setByte(int index, int value) {
@@ -277,11 +277,12 @@ public final class BitVector {
         }
         
         /**
-         * 
-         * @param index : 
-         * @param value
-         * @return
-         * @throws IllegalStateException if 
+         * Sets the given integer at the given index of the bit vector.
+         * @param index : the index of the integer to set.
+         * @param value : the integer value to set.
+         * @return the builder with the integer value changed.
+         * @throws IllegalStateException if the builder is building when the method is called.
+         * @throws IndexOutOfBoundsException if the index is bigger than the number of integers composing the bit vector.
          */
         public Builder setInt(int index, int value) {
             if (newElements == null) throw new IllegalStateException();
@@ -291,8 +292,9 @@ public final class BitVector {
         }
         
         /**
-         * 
-         * @return
+         * Builds the bit vector.
+         * @return the built bit vector.
+         * @throws IllegalStateException if the index is bigger than the number of bytes composing the bit vector.
          */
         public BitVector build() {
             if (newElements == null) throw new IllegalStateException();
