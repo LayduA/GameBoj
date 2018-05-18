@@ -5,6 +5,13 @@ import java.util.Objects;
 
 import ch.epfl.gameboj.Preconditions;
 
+
+/**
+ * A vector of bits which size is a multiple of 32.
+ * 
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public final class BitVector {
 
     private final int[] elements;
@@ -38,6 +45,10 @@ public final class BitVector {
         this(size, false);
     }
     
+    /**
+     * Creates a copy of the bit vector given.
+     * @param b : the bit vector to copy.
+     */
     public BitVector(BitVector b) {
         this(b.elements);
     }
@@ -190,7 +201,6 @@ public final class BitVector {
         for(int i = 0;i<elements.length;i++) {
             
             int a = getElement(i);
-            //System.out.println(Integer.toBinaryString(a));
             s = Integer.toBinaryString(a)+ s;
             
             while(s.length()%32!=0) {
@@ -199,12 +209,11 @@ public final class BitVector {
         }
         return s;
     }
-    //TODO : a supprimer pour le rendu final
-    public static BitVector rand() {
-        int[] val = {-1, -8,2839, 7};
-        return new BitVector(val);
-    }
     
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object other) {
         if (other instanceof BitVector) return equals((BitVector)other);
@@ -219,20 +228,46 @@ public final class BitVector {
         return true;
     }
     
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         return Arrays.hashCode(elements);
     }
-    
+
+    /**
+     * A bit vector builder.
+     * 
+     * @author Adrien Laydu, Michael Tasev
+     *
+     */
     public final static class Builder{
         private int[] newElements;
+        
+        /**
+         * Creates a bit vector builder.
+         * @param size : the size of the bit vector to build.
+         * @throws IllegalArgumentException if the size is negative or not divisible by 32.
+         */
         public Builder(int size) {
-            Preconditions.checkArgument(size%32 == 0&&size>0);
-            newElements = new int[size/32];
+            Preconditions.checkArgument(size%INT_SIZE == 0&&size>0);
+            newElements = new int[size/INT_SIZE];
         }
+        
+        /**
+         * Sets the given byte at the given index of the bit vector.
+         * @param index : the index of the byte to set.
+         * @param value : the 8-bit value to set.
+         * @return the builder with the byte value changed.
+         * @throws IllegalStateException if the builder is building when the method is called.
+         * @throws IndexOutOfBoundsException if the index is bigger than the number of bytes composing the bit vector.
+         * @throws IllegalArgumentException if value is not an 8-bit value.
+         */
         public Builder setByte(int index, int value) {
             if (newElements == null) throw new IllegalStateException();
-            Preconditions.checkIndex(newElements.length/4);
+            if (index > newElements.length*4) throw new IndexOutOfBoundsException();
             Preconditions.checkBits8(value);
             final int mask = 0b11111111 << 8*(index%4);
             final int antiMask = ~mask;
@@ -240,6 +275,15 @@ public final class BitVector {
             newElements[index/4] = previousValue|value<<8*(index%4); 
             return this;
         }
+        
+        /**
+         * Sets the given integer at the given index of the bit vector.
+         * @param index : the index of the integer to set.
+         * @param value : the integer value to set.
+         * @return the builder with the integer value changed.
+         * @throws IllegalStateException if the builder is building when the method is called.
+         * @throws IndexOutOfBoundsException if the index is bigger than the number of integers composing the bit vector.
+         */
         public Builder setInt(int index, int value) {
             if (newElements == null) throw new IllegalStateException();
             Preconditions.checkIndex(newElements.length);
@@ -247,6 +291,11 @@ public final class BitVector {
             return this;
         }
         
+        /**
+         * Builds the bit vector.
+         * @return the built bit vector.
+         * @throws IllegalStateException if the index is bigger than the number of bytes composing the bit vector.
+         */
         public BitVector build() {
             if (newElements == null) throw new IllegalStateException();
             BitVector bv = new BitVector(newElements);
