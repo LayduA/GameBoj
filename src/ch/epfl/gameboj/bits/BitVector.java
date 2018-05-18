@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import ch.epfl.gameboj.Preconditions;
 
-
 /**
  * A vector of bits which size is a multiple of 32.
  * 

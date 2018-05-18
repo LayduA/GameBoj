@@ -6,12 +6,25 @@ import ch.epfl.gameboj.Preconditions;
 import ch.epfl.gameboj.bits.BitVector;
 import ch.epfl.gameboj.bits.Bits;
 
+/**
+ * Represents a line of the lcd image.
+ * 
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public final class LcdImageLine {
     private BitVector msb;
     private BitVector lsb;
     private BitVector opacity;
     private static final int BASE_COLORS = 0b11100100;
 
+    /**
+     * Creates a line of the image.
+     * @param msb : the bit vector containing the most significant bits.
+     * @param lsb : the bit vector containing the least significant bits.
+     * @param opacity : the bit vector containing the opacity of the line.
+     * @throws IllegalArgumentException if msb, lsb and opacity don't have the exact same length.
+     */
     public LcdImageLine(BitVector msb, BitVector lsb, BitVector opacity) {
         Preconditions.checkArgument(
                 msb.size() == lsb.size() && lsb.size() == opacity.size());
@@ -20,27 +33,56 @@ public final class LcdImageLine {
         this.opacity = opacity;
     }
 
+    /**
+     * Gets the size of the line.
+     * @return the size of the line.
+     */
     public int size() {
         return msb.size();
     }
 
+    /**
+     * Gets the bit vector containing the most significant bits of the line.
+     * @return the bit vector "msb".
+     */
     public BitVector msb() {
         return new BitVector(msb);
     }
 
+    /**
+     * Gets the bit vector containing the least significant bits of the line.
+     * @return the bit vector "lsb".
+     */
     public BitVector lsb() {
         return new BitVector(lsb);
     }
 
+    /**
+     * Gets the bit vector containing the opacity of the line.
+     * @return the bit vector "opacity".
+     */
     public BitVector opacity() {
         return new BitVector(opacity);
     }
 
+    /**
+     * Shifts the line a given distance (positive distance shifts to 
+     * the left, negative distance to the right).
+     * @param distance : the distance to shift.
+     * @return a line of the image, shifted the given distance.
+     */
     public LcdImageLine shift(int distance) {
         return new LcdImageLine(msb.shift(distance), lsb.shift(distance),
                 opacity.shift(distance));
     }
 
+    /**
+     * Extracts a line of a given size from a given index, from the wrapped extension
+     * of the original line.
+     * @param index : the index to start at (can be negative).
+     * @param size : the size of the line to extract.
+     * @return the extracted line.
+     */
     public LcdImageLine extractWrapped(int pixelIndex, int size) {
         BitVector newMsb = msb.extractWrapped(pixelIndex, size);
         BitVector newLsb = lsb.extractWrapped(pixelIndex, size);
@@ -49,6 +91,11 @@ public final class LcdImageLine {
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
+    /**
+     * Transforms the colours of a line with the given integer.
+     * @param transformation : an encoding giving the new colours of the line.
+     * @return a line with transformed colours.
+     */
     public LcdImageLine mapColors(int transformation) {
         if (transformation == BASE_COLORS) {
             return this;
@@ -83,11 +130,22 @@ public final class LcdImageLine {
         return ((0b11 << 2 * index) & value) >> (2 * index);
     }
 
+    /**
+     * Composes a line 
+     * @param other : the line 
+     * @return
+     */
     public LcdImageLine below(LcdImageLine other) {
         Preconditions.checkArgument(other.size() == size());
         return below(other, other.opacity);
     }
 
+    /**
+     * Composes a line
+     * @param other
+     * @param opacVector
+     * @return
+     */
     public LcdImageLine below(LcdImageLine other, BitVector opacVector) {
         Preconditions.checkArgument(other.size() == size());
         BitVector newMsb = (other.msb.and(opacVector))
@@ -108,6 +166,10 @@ public final class LcdImageLine {
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object o) {
         if (o instanceof LcdImageLine) {
@@ -118,21 +180,44 @@ public final class LcdImageLine {
         return false;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         return Objects.hash(msb, lsb, opacity);
     }
 
+    /**
+     * An image line builder.
+     * 
+     * @author Adrien Laydu, Michael Tasev
+     *
+     */
     public static class Builder {
         BitVector.Builder msbBuilder;
         BitVector.Builder lsbBuilder;
 
+        /**
+         * Creates an image line builder.
+         * @param size : the size of the line.
+         * @throws IllegalArgumentException if the size is negative or not a multiple of 32.
+         */
         public Builder(int size) {
             Preconditions.checkArgument(size % 32 == 0 && size > 0);
             msbBuilder = new BitVector.Builder(size);
             lsbBuilder = new BitVector.Builder(size);
         }
 
+        /**
+         * 
+         * @param index
+         * @param strongBits
+         * @param weakBits
+         * @return
+         * @throws 
+         */
         public Builder setBytes(int index, int strongBits,int weakBits) {
             msbBuilder.setByte(index, strongBits);
             lsbBuilder.setByte(index, weakBits);
