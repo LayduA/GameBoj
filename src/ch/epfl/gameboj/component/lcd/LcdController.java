@@ -202,7 +202,6 @@ public final class LcdController implements Component, Clocked {
     }
 
     private void reallyCycle(long cycle) {
-
         if (file.get(LcdReg.LY) == 153) {
             nextImageBuilder = new LcdImage.Builder(LCD_WIDTH, LCD_HEIGHT);
             winY = 0;
@@ -248,7 +247,7 @@ public final class LcdController implements Component, Clocked {
     }
 
     private void addLY() {
-        int newValue = (file.get(LcdReg.LY) + 1) % 256;
+        int newValue = (file.get(LcdReg.LY) + 1);
         modifyLYLYC(LcdReg.LY, newValue);
     }
 
@@ -278,7 +277,6 @@ public final class LcdController implements Component, Clocked {
     private LcdImageLine computeLine(int index) {
         LcdImageLine bgLine = computeBGLine(index);
         final int wx = file.get(LcdReg.WX) - 7;
-
         if (index >= file.get(LcdReg.WY) && wx >= 0 && wx < 160
                 && testInReg(LcdReg.LCDC, LCDC.WIN)) {
             final LcdImageLine winLine = computeWinLine(winY);
@@ -298,7 +296,7 @@ public final class LcdController implements Component, Clocked {
             }
 
         }
-        return bgLine;
+        return bgLine == null ? EMPTY_LINE : bgLine;
 
     }
 
@@ -306,11 +304,11 @@ public final class LcdController implements Component, Clocked {
             int shiftX, int shiftY) {
         LcdImageLine.Builder lineBuilder = new LcdImageLine.Builder(256);
 
-        final int startTileLine = (((index + shiftY)) / 8);
+        final int startTileLine = (((index + shiftY)%256) / 8);
         final int startTile = startTileLine * 32;
 
         final int lineIndex = (index + shiftY) % 8;
-
+        //System.out.println(index + shiftY);
         for (int i = 0; i < 32; i++) {
             int tileIndex = read((i + startTile) + dataStart);
             boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);

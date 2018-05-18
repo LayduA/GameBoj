@@ -20,11 +20,13 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    private static KeyCode[] events = { KeyCode.RIGHT, KeyCode.LEFT, KeyCode.UP,
-            KeyCode.DOWN };
-    private static String[] eventsTexts = { "A", "B", "S", "SPACE" };
-
-    private static Map<KeyCode, Key> keymap = Map.of(KeyCode.A, Key.A,
+    private static Map<String, KeyCode> textToKeyCodeMap  = Map.of(
+            "A",KeyCode.A,
+            "B",KeyCode.B,
+            "S",KeyCode.S,
+            " ",KeyCode.SPACE);
+    private static Map<KeyCode, Key> keyMap = Map.of(
+            KeyCode.A, Key.A,
             KeyCode.B, Key.B,
             KeyCode.SPACE, Key.SELECT, 
             KeyCode.S, Key.START,
@@ -41,7 +43,7 @@ public class Main extends Application {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
         }
-        File romFile = new File("donkeykong.gb");
+        File romFile = new File("2048.gb");
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
         ImageView imageView = new ImageView();
         imageView.setFitWidth(2 * LCD_WIDTH);
@@ -49,13 +51,15 @@ public class Main extends Application {
         BorderPane pane = new BorderPane(imageView);
         Scene scene = new Scene(pane);
         imageView.setOnKeyPressed(e -> {
-            if (keymap.containsKey(e.getCode())) {
-                gb.joypad().keyPressed(keymap.get(e.getCode()));
+            KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
+            if (keyMap.containsKey(keycode)) {
+                gb.joypad().keyPressed(keyMap.get(e.getCode()));
             }
         });
         imageView.setOnKeyReleased(e -> {
-            if (keymap.containsKey(e.getCode())) {
-                gb.joypad().keyReleased(keymap.get(e.getCode()));
+            KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
+            if (keyMap.containsKey(keycode)) {
+                gb.joypad().keyReleased(keyMap.get(e.getCode()));
             }
         });
         s.setTitle("gameboj");
