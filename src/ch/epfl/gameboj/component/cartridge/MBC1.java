@@ -8,6 +8,12 @@ import ch.epfl.gameboj.component.Component;
 import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.Rom;
 
+/**
+ * Represents a 1-type memory controller.
+ * 
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public final class MBC1 implements Component {
     private static final int RAM_ENABLE = 0xA;
 
@@ -21,6 +27,11 @@ public final class MBC1 implements Component {
     private int romLsb5, ramRom2;
     private final int romMask, ramMask;
 
+    /**
+     * Builds a 1-type memory controller
+     * @param rom
+     * @param ramSize
+     */
     public MBC1(Rom rom, int ramSize) {
         this.rom = rom;
         this.ram = new Ram(ramSize);
