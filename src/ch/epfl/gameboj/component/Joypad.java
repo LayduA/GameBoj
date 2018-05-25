@@ -9,6 +9,12 @@ import ch.epfl.gameboj.component.cpu.Cpu;
 import ch.epfl.gameboj.component.cpu.Cpu.Interrupt;
 import ch.epfl.gameboj.bits.Bits;
 
+/**
+ * Represents the joypad of the gameboy.
+ * 
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public class Joypad implements Component {
 
     private int line0;
@@ -17,14 +23,29 @@ public class Joypad implements Component {
     
     private int strongBitsP1;
 
+    /**
+     * The bits corresponding to each button on the joypad.
+     * 
+     * @author Adrien Laydu, Michael Tasev
+     *
+     */
     public enum Key implements Bit {
         RIGHT, LEFT, UP, DOWN, A, B, SELECT, START
     }
     
+    /**
+     * Creates a new Joypad, linked to a given cpu. 
+     * @param cpu : the cpu linked to the Joypad.
+     */
     public Joypad(Cpu cpu) {
         this.cpu = cpu;
     }
 
+    /**
+     * Simulates when a key is pressed.
+     * 
+     * @param k : the pressed key.
+     */
     public void keyPressed(Key k) {
         int currentP1 = P1();
         keyChange(k,true);
@@ -34,6 +55,11 @@ public class Joypad implements Component {
         
     }
 
+    /**
+     * Simulates when a key is released.
+     * 
+     * @param k : the r key.
+     */
     public void keyReleased(Key k) {
         keyChange(k, false);
 
@@ -47,7 +73,10 @@ public class Joypad implements Component {
         }
     }
     
-
+    /*
+     * (non-Javadoc)
+     * @see ch.epfl.gameboj.component.Component#read(int)
+     */
     @Override
     public int read(int address) {
         Preconditions.checkBits16(address);
@@ -57,6 +86,10 @@ public class Joypad implements Component {
         return NO_DATA;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see ch.epfl.gameboj.component.Component#write(int, int)
+     */
     @Override
     public void write(int address, int data) {
         

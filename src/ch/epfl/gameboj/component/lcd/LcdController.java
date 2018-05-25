@@ -365,7 +365,7 @@ public final class LcdController implements Component, Clocked {
             for (int i = 0; i < spritesToUse.length; i++) {
                 line = individualSpriteLine(spritesToUse[i],
                         (index - objectRam.read(spritesToUse[i]) + 16))
-                                .below(line);
+                        .below(line);
             }
         }
         return line;

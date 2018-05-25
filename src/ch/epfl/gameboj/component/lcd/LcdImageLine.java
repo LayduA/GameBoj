@@ -134,6 +134,7 @@ public final class LcdImageLine {
      * Composes a line 
      * @param other : the line 
      * @return
+     * @throws IllegalArgumentException if the size of the two lines are not equal.
      */
     public LcdImageLine below(LcdImageLine other) {
         Preconditions.checkArgument(other.size() == size());
@@ -141,10 +142,11 @@ public final class LcdImageLine {
     }
 
     /**
-     * Composes a line
-     * @param other
-     * @param opacVector
+     * Composes a line 
+     * @param other : 
+     * @param opacVector : 
      * @return
+     * @throws IllegalArgumentException if the size of the two lines are not equal.
      */
     public LcdImageLine below(LcdImageLine other, BitVector opacVector) {
         Preconditions.checkArgument(other.size() == size());
@@ -156,6 +158,13 @@ public final class LcdImageLine {
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
+    /**
+     * Joins the line with a given line, from a given index (of pixel).
+     * @param other : the line with which we join our line.
+     * @param index : the index of the pixel from which we separate the two lines.
+     * @return a new line of the image, with a composition of both lines.
+     * @throws IllegalArgumentException if index is negative or bigger than the size of the lines.
+     */
     public LcdImageLine join(LcdImageLine other, int index) {
         Preconditions.checkArgument(index<other.size()&&index >=0);
         BitVector mask = (new BitVector(size(), true)).shift(index);
@@ -211,12 +220,14 @@ public final class LcdImageLine {
         }
 
         /**
-         * 
-         * @param index
-         * @param strongBits
-         * @param weakBits
-         * @return
-         * @throws 
+         * Sets the bytes at the given index of the line.
+         * @param index : the index of the byte to modify.
+         * @param strongBits : the most significant bits of the new value.
+         * @param weakBits : the least significant bits of the new value.
+         * @return the builder with the byte value changed.
+         * @throws IllegalStateException if the builder is building when the method is called.
+         * @throws IndexOutOfBoundsException if the index is bigger than the number of bytes composing the bit vector.
+         * @throws IllegalArgumentException if strongBits or weakBits is not an 8-bit value. 
          */
         public Builder setBytes(int index, int strongBits,int weakBits) {
             msbBuilder.setByte(index, strongBits);
@@ -224,6 +235,11 @@ public final class LcdImageLine {
             return this;
         }
 
+        /**
+         * Builds the line with the bit vectors stored so far.
+         * @return a line composed with the bit vectors stored so far.
+         * @throws IllegalArgumentException if msb, lsb and opacity don't have the exact same length.
+         */
         public LcdImageLine build() {
             BitVector msb = msbBuilder.build();
             BitVector lsb = lsbBuilder.build();
