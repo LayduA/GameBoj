@@ -287,7 +287,7 @@ public final class LcdController implements Component, Clocked {
         if (index >= file.get(LcdReg.WY) && wx >= 0 && wx < 160
                 && testInReg(LcdReg.LCDC, LCDC.WIN)) {
             final LcdImageLine winLine = computeWinLine(winY);
-            bgLine = bgLine.join(winLine, LCD_WIDTH - 1 - wx);
+            bgLine = winLine.join(bgLine, wx);
         }
         //bgLine = bgLine.mapColors(file.get(LcdReg.BGP));
         if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
@@ -348,7 +348,7 @@ public final class LcdController implements Component, Clocked {
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
         winY = (winY + 1) % 256;
-        return computeWinOrBGLine(index, dataStart, wx, 0);
+        return computeWinOrBGLine(index, dataStart, -wx, 0);
 
     }
 

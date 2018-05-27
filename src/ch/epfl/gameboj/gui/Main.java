@@ -43,7 +43,7 @@ public class Main extends Application {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
         }
-        File romFile = new File("DONKEYKONG.gb");
+        File romFile = new File("tetris.gb");
         GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
         ImageView imageView = new ImageView();
         imageView.setFitWidth(2 * LCD_WIDTH);
