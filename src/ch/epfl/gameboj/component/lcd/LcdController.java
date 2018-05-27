@@ -42,6 +42,8 @@ public final class LcdController implements Component, Clocked {
     private LcdImage currentImage;
 
     private int copySource;
+    
+    private boolean beginningNewImage = true;
 
     private final Ram videoRam = new Ram(AddressMap.VIDEO_RAM_SIZE);
     private final Ram objectRam = new Ram(AddressMap.OAM_RAM_SIZE);
@@ -135,8 +137,9 @@ public final class LcdController implements Component, Clocked {
             switch (reg) {
             case LCDC:
                 if (!Bits.test(data, LCDC.LCD_STATUS)) {
-                    setMode(0);
-                    modifyLYLYC(LcdReg.LY, 0);
+                    setMode(0,0);
+                    beginningNewImage = true;
+                    modifyLYLYC(LcdReg.LY, 0,0);
                     nextNonIdleCycle = Long.MAX_VALUE;
                     file.set(reg, data);
                 } else {
@@ -151,7 +154,7 @@ public final class LcdController implements Component, Clocked {
                 file.set(LcdReg.STAT, Bits.clip(3, value) | (newValue << 3));
                 break;
             case LYC:
-                modifyLYLYC(reg, data);
+                modifyLYLYC(reg, data,0);
                 break;
             case LY:
                 break;
@@ -209,36 +212,43 @@ public final class LcdController implements Component, Clocked {
         switch (getMode()) {
         case 1:
             if (file.get(LcdReg.LY) == 153) {
-                setMode(2);
+                modifyLYLYC(LcdReg.LY, 0,cycle);
+                setMode(2,cycle);
                 nextNonIdleCycle += 20;
-                file.set(LcdReg.LY, 0);
+                
             } else {
                 nextNonIdleCycle += 114;
-                addLY();
+                addLY(cycle);
             }
             break;
         case 2:
-            setMode(3);
+            setMode(3,cycle);
             
             nextImageBuilder.setLine(file.get(LcdReg.LY), computeLine(file.get(LcdReg.LY)));
 
             nextNonIdleCycle += 43;
             break;
         case 3:
-            setMode(0);
+            setMode(0,cycle);
             nextNonIdleCycle += 51;
             break;
         case 0:
-            addLY();
-            if (file.get(LcdReg.LY) < 144) {
-                setMode(2);
+            
+            if (file.get(LcdReg.LY) < 143) {
+                if(!beginningNewImage) {
+                    addLY(cycle);
+                }
+                setMode(2,cycle);
                 nextNonIdleCycle += 20;
+                beginningNewImage = false;
             } else {
 
-                setMode(1);
+                setMode(1,cycle);
+                addLY(cycle);
                 currentImage = nextImageBuilder.build();
                 nextNonIdleCycle += 114;
             }
+            
             break;
         default:
             break;
@@ -246,26 +256,23 @@ public final class LcdController implements Component, Clocked {
 
     }
 
-    private void addLY() {
+    private void addLY(long cycle) {
         int newValue = (file.get(LcdReg.LY) + 1);
-        modifyLYLYC(LcdReg.LY, newValue);
+        modifyLYLYC(LcdReg.LY, newValue,cycle);
     }
 
-    private void setMode(int mode) {
+    private void setMode(int mode, long cycle) {
         if (mode < 3) {
             if (mode == 1) {
                 cpu.requestInterrupt(Interrupt.VBLANK);
             }
             STAT s = (STAT.values()[STAT.INT_MODE0.index() + mode]);
             if (testInReg(LcdReg.STAT, s)) {
-                System.out.println("jaj");
                 cpu.requestInterrupt(Interrupt.LCD_STAT);
             }
         }
-
         setInReg(LcdReg.STAT, STAT.MODE0, Bits.test(mode, 0));
         setInReg(LcdReg.STAT, STAT.MODE1, Bits.test(mode, 1));
-
     }
 
     private int getMode() {
@@ -282,6 +289,7 @@ public final class LcdController implements Component, Clocked {
             final LcdImageLine winLine = computeWinLine(winY);
             bgLine = bgLine.join(winLine, LCD_WIDTH - 1 - wx);
         }
+        //bgLine = bgLine.mapColors(file.get(LcdReg.BGP));
         if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
             final LcdImageLine spritesFrontLine = computeSpritesLine(index,
                     true);
@@ -308,7 +316,6 @@ public final class LcdController implements Component, Clocked {
         final int startTile = startTileLine * 32;
 
         final int lineIndex = (index + shiftY) % 8;
-        //System.out.println(index + shiftY);
         for (int i = 0; i < 32; i++) {
             int tileIndex = read((i + startTile) + dataStart);
             boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
@@ -318,9 +325,7 @@ public final class LcdController implements Component, Clocked {
                     false);
             lineBuilder.setBytes(i, strongBits, weakBits);
         }
-        LcdImageLine l = lineBuilder.build().extractWrapped(shiftX, LCD_WIDTH)
-                .mapColors(file.get(LcdReg.BGP));
-        ;
+        LcdImageLine l = lineBuilder.build().extractWrapped(shiftX, LCD_WIDTH).mapColors(file.get(LcdReg.BGP));
 
         return l;
     }
@@ -391,14 +396,13 @@ public final class LcdController implements Component, Clocked {
                 : Bits.reverse8(read(address + 2 * lineIndex));
     }
 
-    private void modifyLYLYC(LcdReg reg, int data) {
+    private void modifyLYLYC(LcdReg reg, int data,long cycle) {
         final LcdReg other = (reg == LcdReg.LY ? LcdReg.LYC : LcdReg.LY);
         final int otherValue = file.get(other);
         if (data == otherValue && testInReg(LcdReg.STAT, STAT.INT_LYC)) {
             cpu.requestInterrupt(Interrupt.LCD_STAT);
         }
         setInReg(LcdReg.STAT, STAT.LYC_EQ_LY, otherValue == data);
-
         file.set(reg, data);
     }
 
@@ -457,8 +461,7 @@ public final class LcdController implements Component, Clocked {
             strongBits = Bits.reverse8(strongBits);
         }
         builder.setBytes(0, strongBits, weakBits);
-        return builder.build().mapColors(colors)
-                .shift(objectRam.read(tileNumber + 1) - 8);
+        return (builder.build().shift(objectRam.read(tileNumber + 1) - 8)).mapColors(colors);
     }
 
 }
