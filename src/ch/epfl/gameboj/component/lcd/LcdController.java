@@ -16,11 +16,14 @@ import ch.epfl.gameboj.component.Component;
 import ch.epfl.gameboj.component.cpu.Cpu;
 import ch.epfl.gameboj.component.cpu.Cpu.Interrupt;
 import ch.epfl.gameboj.component.memory.Ram;
-
-/*
- * A component that controls the screen.
- */
-public final class LcdController implements Component, Clocked {
+    
+    /**
+     * A component that controls the screen.
+     * 
+     * @author Adrien Laydu, Michael Tasev
+     *
+     */
+    public final class LcdController implements Component, Clocked {
     /*
      * The dimensions of the visible screen.
      */
@@ -66,6 +69,10 @@ public final class LcdController implements Component, Clocked {
         UNUSED0, UNUSED1, UNUSED2, UNUSED3, PALETTE, FLIP_H, FLIP_V, BEHIND_BG
     }
 
+    /**
+     * Creates an LcdController linked to a given cpu.
+     * @param cpu : the cpu linked to the LcdController.
+     */
     public LcdController(Cpu cpu) {
         this.cpu = cpu;
     }

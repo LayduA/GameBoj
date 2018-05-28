@@ -28,9 +28,9 @@ public final class MBC1 implements Component {
     private final int romMask, ramMask;
 
     /**
-     * Builds a 1-type memory controller
-     * @param rom
-     * @param ramSize
+     * Creates a 1-type memory controller for the given rom.
+     * @param rom : the memory to control.
+     * @param ramSize : the size of the ram.
      */
     public MBC1(Rom rom, int ramSize) {
         this.rom = rom;
@@ -45,6 +45,11 @@ public final class MBC1 implements Component {
         this.ramMask = ramSize - 1;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see ch.epfl.gameboj.component.Component#read(int)
+     */
+    @Override
     public int read(int address) {
         switch (Bits.extract(checkBits16(address), 13, 3)) {
         case 0: case 1:
@@ -58,6 +63,10 @@ public final class MBC1 implements Component {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see ch.epfl.gameboj.component.Component#write(int, int)
+     */
     @Override
     public void write(int address, int data) {
         checkBits8(data);
