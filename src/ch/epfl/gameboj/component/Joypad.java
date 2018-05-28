@@ -58,7 +58,7 @@ public class Joypad implements Component {
     /**
      * Simulates when a key is released.
      * 
-     * @param k : the r key.
+     * @param k : the released key.
      */
     public void keyReleased(Key k) {
         keyChange(k, false);
