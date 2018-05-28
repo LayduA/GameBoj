@@ -46,7 +46,7 @@ import ch.epfl.gameboj.component.memory.Ram;
 
     private int copySource;
     
-    private boolean firstImage = true;
+    private boolean beginningNewImage = true;
 
     private final Ram videoRam = new Ram(AddressMap.VIDEO_RAM_SIZE);
     private final Ram objectRam = new Ram(AddressMap.OAM_RAM_SIZE);
@@ -144,9 +144,9 @@ import ch.epfl.gameboj.component.memory.Ram;
             switch (reg) {
             case LCDC:
                 if (!Bits.test(data, LCDC.LCD_STATUS)) {
-                    setMode(0);
-                    firstImage = true;
-                    modifyLYLYC(LcdReg.LY, 0);
+                    setMode(0,0);
+                    beginningNewImage = true;
+                    modifyLYLYC(LcdReg.LY, 0,0);
                     nextNonIdleCycle = Long.MAX_VALUE;
                     file.set(reg, data);
                 } else {
@@ -161,7 +161,7 @@ import ch.epfl.gameboj.component.memory.Ram;
                 file.set(LcdReg.STAT, Bits.clip(3, value) | (newValue << 3));
                 break;
             case LYC:
-                modifyLYLYC(reg, data);
+                modifyLYLYC(reg, data,0);
                 break;
             case LY:
                 break;
@@ -219,8 +219,8 @@ import ch.epfl.gameboj.component.memory.Ram;
         switch (getMode()) {
         case 1:
             if (file.get(LcdReg.LY) == 153) {
-                modifyLYLYC(LcdReg.LY, 0);
-                setMode(2);
+                modifyLYLYC(LcdReg.LY, 0,cycle);
+                setMode(2,cycle);
                 nextNonIdleCycle += 20;
                 
             } else {
@@ -229,28 +229,28 @@ import ch.epfl.gameboj.component.memory.Ram;
             }
             break;
         case 2:
-            setMode(3);
+            setMode(3,cycle);
             
             nextImageBuilder.setLine(file.get(LcdReg.LY), computeLine(file.get(LcdReg.LY)));
 
             nextNonIdleCycle += 43;
             break;
         case 3:
-            setMode(0);
+            setMode(0,cycle);
             nextNonIdleCycle += 51;
             break;
         case 0:
             
             if (file.get(LcdReg.LY) < 143) {
-                if(!firstImage) {
+                if(!beginningNewImage) {
                     addLY(cycle);
                 }
-                setMode(2);
+                setMode(2,cycle);
                 nextNonIdleCycle += 20;
-                firstImage = false;
+                beginningNewImage = false;
             } else {
 
-                setMode(1);
+                setMode(1,cycle);
                 addLY(cycle);
                 currentImage = nextImageBuilder.build();
                 nextNonIdleCycle += 114;
@@ -265,10 +265,10 @@ import ch.epfl.gameboj.component.memory.Ram;
 
     private void addLY(long cycle) {
         int newValue = (file.get(LcdReg.LY) + 1);
-        modifyLYLYC(LcdReg.LY, newValue);
+        modifyLYLYC(LcdReg.LY, newValue,cycle);
     }
 
-    private void setMode(int mode) {
+    private void setMode(int mode, long cycle) {
         if (mode < 3) {
             if (mode == 1) {
                 cpu.requestInterrupt(Interrupt.VBLANK);
@@ -304,14 +304,14 @@ import ch.epfl.gameboj.component.memory.Ram;
                     false);
 
             if (spritesBackLine != null) {
-                bgLine = spritesBackLine.below(bgLine,bgLine.opacity().or(spritesBackLine.opacity().not()));
+                bgLine = spritesBackLine.below(bgLine);
             }
             if (spritesFrontLine != null) {
                 bgLine = bgLine.below(spritesFrontLine);
             }
 
         }
-        return bgLine;
+        return bgLine == null ? EMPTY_LINE : bgLine;
 
     }
 
@@ -322,7 +322,7 @@ import ch.epfl.gameboj.component.memory.Ram;
         final int startTileLine = (((index + shiftY)%256) / 8);
         final int startTile = startTileLine * 32;
 
-        final int lineIndex = (index) % 8;
+        final int lineIndex = (index + shiftY) % 8;
         for (int i = 0; i < 32; i++) {
             int tileIndex = read((i + startTile) + dataStart);
             boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);
@@ -332,7 +332,7 @@ import ch.epfl.gameboj.component.memory.Ram;
                     false);
             lineBuilder.setBytes(i, strongBits, weakBits);
         }
-        LcdImageLine l = lineBuilder.build().extractWrapped(shiftX, LCD_WIDTH);
+        LcdImageLine l = lineBuilder.build().extractWrapped(shiftX, LCD_WIDTH).mapColors(file.get(LcdReg.BGP));
 
         return l;
     }
@@ -345,7 +345,7 @@ import ch.epfl.gameboj.component.memory.Ram;
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
         final int shiftY = file.get(LcdReg.SCY);
-        return computeWinOrBGLine(index, dataStart, shiftX, shiftY).mapColors(file.get(LcdReg.BGP));
+        return computeWinOrBGLine(index, dataStart, shiftX, shiftY);
     }
 
     private LcdImageLine computeWinLine(int index) {
@@ -355,7 +355,7 @@ import ch.epfl.gameboj.component.memory.Ram;
                 ? AddressMap.BG_DISPLAY_DATA[1]
                 : AddressMap.BG_DISPLAY_DATA[0]);
         winY = (winY + 1) % 256;
-        return computeWinOrBGLine(index, dataStart, -wx, 0).mapColors(file.get(LcdReg.BGP));
+        return computeWinOrBGLine(index, dataStart, -wx, 0);
 
     }
 
@@ -371,15 +371,13 @@ import ch.epfl.gameboj.component.memory.Ram;
                 count++;
             }
         }
-        if (count == 0) return null;
         int[] spritesToUse = Arrays.copyOf(spritesLine, count);
         LcdImageLine line = EMPTY_LINE;
-        LcdImageLine individualLine = EMPTY_LINE;
         if (spritesToUse != null) {
             for (int i = 0; i < spritesToUse.length; i++) {
-                individualLine = individualSpriteLine(spritesToUse[i],
-                        (index - objectRam.read(spritesToUse[i]) + 16));
-                line = individualLine.below(line);
+                line = individualSpriteLine(spritesToUse[i],
+                        (index - objectRam.read(spritesToUse[i]) + 16))
+                        .below(line);
             }
         }
         return line;
@@ -405,7 +403,7 @@ import ch.epfl.gameboj.component.memory.Ram;
                 : Bits.reverse8(read(address + 2 * lineIndex));
     }
 
-    private void modifyLYLYC(LcdReg reg, int data) {
+    private void modifyLYLYC(LcdReg reg, int data,long cycle) {
         final LcdReg other = (reg == LcdReg.LY ? LcdReg.LYC : LcdReg.LY);
         final int otherValue = file.get(other);
         if (data == otherValue && testInReg(LcdReg.STAT, STAT.INT_LYC)) {
