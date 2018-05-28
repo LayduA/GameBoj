@@ -26,8 +26,6 @@ import static ch.epfl.gameboj.component.cpu.Alu.unpackFlags;
 import static ch.epfl.gameboj.component.cpu.Alu.unpackValue;
 import static ch.epfl.gameboj.component.cpu.Alu.xor;
 
-import java.util.Arrays;
-
 import ch.epfl.gameboj.AddressMap;
 import ch.epfl.gameboj.Bus;
 import ch.epfl.gameboj.Register;

@@ -322,7 +322,7 @@ import ch.epfl.gameboj.component.memory.Ram;
         final int startTileLine = (((index + shiftY)%256) / 8);
         final int startTile = startTileLine * 32;
 
-        final int lineIndex = (index + shiftY) % 8;
+        final int lineIndex = (index) % 8;
         for (int i = 0; i < 32; i++) {
             int tileIndex = read((i + startTile) + dataStart);
             boolean tileSource = testInReg(LcdReg.LCDC, LCDC.TILE_SOURCE);

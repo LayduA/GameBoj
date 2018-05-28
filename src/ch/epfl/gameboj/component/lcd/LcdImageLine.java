@@ -131,9 +131,10 @@ public final class LcdImageLine {
     }
 
     /**
-     * Composes a line 
-     * @param other : the line 
-     * @return
+     * Composes a line with a given line, each pixel being from the given line if the pixel is opaque, 
+     * or from the original line if not.
+     * @param other : the line placed on the original line to compose the new line.
+     * @return a new line composed with the given line.
      * @throws IllegalArgumentException if the size of the two lines are not equal.
      */
     public LcdImageLine below(LcdImageLine other) {
@@ -142,10 +143,12 @@ public final class LcdImageLine {
     }
 
     /**
-     * Composes a line 
-     * @param other : 
-     * @param opacVector : 
-     * @return
+     * Composes a line with a given line and an opacity vector, each pixel being from the given line 
+     * if the pixel of the opacity vector is opaque, or from the original line if not.
+     * @param other : the line placed on the original line to compose the new line.
+     * @param opacVector : the vector used to select either a pixel from the new line, either a pixel
+     * from the original line.
+     * @return a new line composed with the given line and the given opacity vector.
      * @throws IllegalArgumentException if the size of the two lines are not equal.
      */
     public LcdImageLine below(LcdImageLine other, BitVector opacVector) {

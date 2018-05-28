@@ -1,7 +1,6 @@
 package ch.epfl.gameboj.bits;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 import ch.epfl.gameboj.Preconditions;
 

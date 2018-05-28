@@ -24,7 +24,6 @@ public final class Cartridge implements Component {
 
     private final Component mbController;
 
-    private static final int ROM_SIZE = 0x8000;
     private static final int MBC_TYPE_ADDRESS = 0x147;
     private static final int MBC_RAM_SIZE = 0x149;
     private static final int[] MBC_RAM_SIZE_VALUE = { 0, 2048, 8192, 32768 };
@@ -52,13 +51,13 @@ public final class Cartridge implements Component {
         try(InputStream stream = new BufferedInputStream(new FileInputStream(romFile))) {
             byte[] data = stream.readAllBytes();
             
-            int cartridgeType = data[0x147];
+            int cartridgeType = data[MBC_TYPE_ADDRESS];
             Preconditions.checkArgument(cartridgeType >= 0 && cartridgeType < 4); //0x147 correspond au type de la cartouche.
             Component bc;
             if (cartridgeType > 0) {
                 int ramSize = 0;
                 if (cartridgeType == 3) {
-                    int ramType = data[0x149];
+                    int ramType = data[MBC_RAM_SIZE];
                     Preconditions.checkArgument(ramType >= 0 && ramType < 4);
                     ramSize = MBC_RAM_SIZE_VALUE[ramType];
                 }
