@@ -297,7 +297,6 @@ public final class LcdController implements Component, Clocked {
                     false);
 
             if (spritesBackLine != null) {
-                System.out.println("jaj");
                 bgLine = spritesBackLine.below(bgLine,bgLine.opacity().or(spritesBackLine.opacity().not()));
             }
             if (spritesFrontLine != null) {
