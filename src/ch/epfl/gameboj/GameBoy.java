@@ -131,10 +131,20 @@ public final class GameBoy implements AddressMap {
         return timer;
     }
 
+    /**
+     * Gets the Gameboy's lcd controller.
+     * 
+     * @return the Gameboy's lcd controller.
+     */
     public LcdController lcdController() {
         return lcdController;
     }
 
+    /**
+     * Gets the Gameboy's joypad.
+     * 
+     * @return the Gameboy's joypad.
+     */
     public Joypad joypad() {
         return joypad;
     }

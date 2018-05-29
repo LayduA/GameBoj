@@ -2,7 +2,8 @@ package ch.epfl.gameboj;
 
 /**
  * A Register. This interface is meant to be implemented by enum types only.
- * @author Adrien
+ * 
+ * @author Adrien Laydu, Michael Tasev
  *
  */
 public interface Register {

@@ -296,7 +296,6 @@ import ch.epfl.gameboj.component.memory.Ram;
             final LcdImageLine winLine = computeWinLine(winY);
             bgLine = winLine.join(bgLine, wx);
         }
-        //bgLine = bgLine.mapColors(file.get(LcdReg.BGP));
         if (testInReg(LcdReg.LCDC, LCDC.OBJ)) {
             final LcdImageLine spritesFrontLine = computeSpritesLine(index,
                     true);

@@ -95,7 +95,6 @@ public class Joypad implements Component {
         Preconditions.checkBits8(data);
         
         if (address == AddressMap.REG_P1) {
-            //System.out.println(Integer.toBinaryString(data));
             
             final int newValue = Bits.complement8(data);
             final int twoBits = Bits.extract(newValue, 4, 2);

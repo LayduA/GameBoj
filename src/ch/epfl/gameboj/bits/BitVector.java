@@ -104,7 +104,7 @@ public final class BitVector {
      * @throws IllegalArgumentException if the two bit vectors are not the same size.
      */
     public BitVector or(BitVector other) {
-        Preconditions.checkArgument(size()==other.size());
+        Preconditions.checkArgument(size() == other.size());
         final int[] newElements = new int[elements.length];
         for (int i = 0; i < elements.length; i++) {
             newElements[i] = this.getElement(i) | other.getElement(i);

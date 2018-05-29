@@ -10,6 +10,7 @@ import ch.epfl.gameboj.component.Component;
 
 /**
  * A Bus linking different Components, able to read and write through them.
+ * 
  * @author Adrien Laydu, Michael Tasev
  *
  */

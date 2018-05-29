@@ -52,7 +52,7 @@ public final class Cartridge implements Component {
             byte[] data = stream.readAllBytes();
             
             int cartridgeType = data[MBC_TYPE_ADDRESS];
-            Preconditions.checkArgument(cartridgeType >= 0 && cartridgeType < 4); //0x147 correspond au type de la cartouche.
+            Preconditions.checkArgument(cartridgeType >= 0 && cartridgeType < 4);
             Component bc;
             if (cartridgeType > 0) {
                 int ramSize = 0;
