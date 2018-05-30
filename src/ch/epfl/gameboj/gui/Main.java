@@ -57,29 +57,36 @@ public class Main extends Application {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
         }
-        File romFile = new File("supermarioland2.gb");
-        GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
-        ImageView imageView = new ImageView();
+        final File romFile = new File(getParameters().getRaw().get(0));
+        final GameBoy gb = new GameBoy(Cartridge.ofFile(romFile));
+        
+        final ImageView imageView = new ImageView();
         imageView.setFitWidth(2 * LCD_WIDTH);
         imageView.setFitHeight(2 * LCD_HEIGHT);
-        BorderPane pane = new BorderPane(imageView);
-        Scene scene = new Scene(pane);
+        final BorderPane pane = new BorderPane(imageView);
+        final Scene scene = new Scene(pane);
+        
+        //Handling key actions.
         imageView.setOnKeyPressed(e -> {
-            KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
+            final KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
             if (keyMap.containsKey(keycode)) {
                 gb.joypad().keyPressed(keyMap.get(e.getCode()));
             }
         });
         imageView.setOnKeyReleased(e -> {
-            KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
+            final KeyCode keycode = textToKeyCodeMap.containsKey(e.getText()) ? textToKeyCodeMap.get(e.getText()) : e.getCode();
             if (keyMap.containsKey(keycode)) {
                 gb.joypad().keyReleased(keyMap.get(e.getCode()));
             }
         });
+        
+        //Displaying.
         s.setTitle("Gameboj");
         s.setScene(scene);
         s.show();
         imageView.requestFocus();
+        
+        //Updating the gameboy.
         long start = System.nanoTime();
         AnimationTimer timer = new AnimationTimer() {
             @Override
