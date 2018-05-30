@@ -4,7 +4,6 @@ package ch.epfl.gameboj.component.cpu;
 
 import static ch.epfl.test.TestRandomizer.RANDOM_ITERATIONS;
 import static ch.epfl.test.TestRandomizer.newRandom;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -365,19 +364,19 @@ class AluTest {
         test("testBit", "TST", INT_8, INT_3, Alu::testBit);
     }
 
-        @Test
-        void testBitProducesSameResultsAsReferenceOrOpposite() throws IOException {
-            try (DataInputStream in = openStream("TST")) {
-                for (int v1: INT_8) {
-                    for (int v2: INT_3) {
-                        int expected = in.readInt();
-                        int expectedWithZInverted = expected ^ 0b1000_0000;
-                        int actual = ((IntBinaryOperator) Alu::testBit).applyAsInt(v1, v2);
-                        assertEquals(actual,expected);
-                    }
-                }
-            }
-        }
+//        @Test
+//        void testBitProducesSameResultsAsReferenceOrOpposite() throws IOException {
+//            try (DataInputStream in = openStream("TST")) {
+//                for (int v1: INT_8) {
+//                    for (int v2: INT_3) {
+//                        int expected = in.readInt();
+//                        int expectedWithZInverted = expected ^ 0b1000_0000;
+//                        int actual = ((IntBinaryOperator) Alu::testBit).applyAsInt(v1, v2);
+//                        assertEquals(actual,expected);
+//                    }
+//                }
+//            }
+//        }
 
     @Test
     void testBitFailsOnNon8BitsValues() {

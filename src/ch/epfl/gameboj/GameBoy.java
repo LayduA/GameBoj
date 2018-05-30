@@ -12,15 +12,16 @@ import ch.epfl.gameboj.component.memory.Ram;
 import ch.epfl.gameboj.component.memory.RamController;
 
 /**
- * A simulated, functional Gameboy.
+ * A simulated, functional GameBoy.
  * 
  * @author Adrien Laydu, Michael Tasev
  *
  */
 public final class GameBoy implements AddressMap {
 
-    public static final long CYCLE_PER_SECOND = 1L << 20;
-    public static final double CYCLE_PER_NANOSECOND = (double)(CYCLE_PER_SECOND /1e9);
+    // A couple useful constants.
+    public static final long CYCLES_PER_SECOND = 1L << 20;
+    public static final double CYCLES_PER_NANOSECOND = (double)(CYCLES_PER_SECOND /1e9);
 
     private final Bus bus;
     private final Cpu cpu;
@@ -32,7 +33,7 @@ public final class GameBoy implements AddressMap {
     private int cycles;
 
     /**
-     * Creates a new Gameboy with the given cartridge.
+     * Creates a new GameBoy with the given cartridge.
      * 
      * @param cartridge
      *            : the initial cartridge of the GameBoy
@@ -54,14 +55,14 @@ public final class GameBoy implements AddressMap {
         final RamController echoRamController = new RamController(echoRam,
                 ECHO_RAM_START, ECHO_RAM_END);
 
-        // Initializing all the components.
+        // Initialising all the components.
         cpu = new Cpu();
         bus = new Bus();
         timer = new Timer(cpu);
         lcdController = new LcdController(cpu);
         joypad = new Joypad(cpu);
 
-        // The boot rom controller of the gameboy.
+        // The boot rom controller of the GameBoy.
         final BootRomController BRC = new BootRomController(cartridge);
 
         // Attaching our components.
@@ -78,10 +79,10 @@ public final class GameBoy implements AddressMap {
     }
 
     /**
-     * Simulates the Gameboy until a given cycle (excluded).
+     * Simulates the GameBoy until a given cycle (excluded).
      * 
      * @param cycle
-     *            : a long, the cycle until which the Gameboy is to be run.
+     *            : a long, the cycle until which the GameBoy is to be run.
      * @throws IllegalArgumentException
      *             if the given cycle has already been processed.
      */
@@ -96,25 +97,25 @@ public final class GameBoy implements AddressMap {
     }
 
     /**
-     * Gets the Gameboy's bus.
+     * Gets the GameBoy's bus.
      * 
-     * @return the Gameboy's bus.
+     * @return the GameBoy's bus.
      */
     public Bus bus() {
         return bus;
     }
 
     /**
-     * Gets the Gameboy's cpu
+     * Gets the GameBoy's cpu
      * 
-     * @return the Gameboy's cpu.
+     * @return the GameBoy's cpu.
      */
     public Cpu cpu() {
         return cpu;
     }
 
     /**
-     * Gets the number of cycle the Gameboy has processed yet.
+     * Gets the number of cycle the GameBoy has processed yet.
      * 
      * @return an integer, the number of cycles processed.
      */
@@ -123,27 +124,27 @@ public final class GameBoy implements AddressMap {
     }
 
     /**
-     * Gets the Gameboy's Timer
+     * Gets the GameBoy's Timer
      * 
-     * @return the Gameboy's timer.
+     * @return the GameBoy's timer.
      */
     public Timer timer() {
         return timer;
     }
 
     /**
-     * Gets the Gameboy's lcd controller.
+     * Gets the GameBoy's lcd controller.
      * 
-     * @return the Gameboy's lcd controller.
+     * @return the GameBoy's lcd controller.
      */
     public LcdController lcdController() {
         return lcdController;
     }
 
     /**
-     * Gets the Gameboy's joypad.
+     * Gets the GameBoy's joypad.
      * 
-     * @return the Gameboy's joypad.
+     * @return the GameBoy's joypad.
      */
     public Joypad joypad() {
         return joypad;

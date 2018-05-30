@@ -48,7 +48,6 @@ public final class Bits {
      * @return an int with a unique 1 at the index given.
      * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
      */
-    
     public static int mask(int index) {
         checkIndex(index);
         return (1 << index);
@@ -61,7 +60,6 @@ public final class Bits {
      * @return true if the bit tested is 1, false if the bit tested is 0.
      * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
      */
-    
     public static boolean test(int bits, int index) {
         checkIndex(index);
         return ((bits & mask(index)) != 0);
@@ -74,7 +72,6 @@ public final class Bits {
      * @return true if the bit tested is 1, false if the bit tested is 0. 
      * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
      */
-    
     public static boolean test(int bits, Bit bit) {
         return test(bits, bit.index());
     }
@@ -87,7 +84,6 @@ public final class Bits {
      * @return the int given with the bit of the index changed to 1 if newValue is true, 0 if newValue is false.
      * @throws IndexOutOfBoundsException - if index is not valid (namely negative or >= 32).
      */
-    
     public static int set(int bits, int index, boolean newValue) {
         checkIndex(index);
         if (newValue) {
@@ -119,7 +115,6 @@ public final class Bits {
      * @return an int with the size least significant bits rotated a given number of times and the other bits unchanged from the int given.
      * @throws IllegalArgumentException if size is bigger or equal to 32 or strictly smaller than 0.
      */
-    
     public static int rotate(int size, int bits, int distance) {
 
         checkArgument(size <= Integer.SIZE && size > 0);
@@ -136,9 +131,9 @@ public final class Bits {
      * @param start , the index of the bit of the int given from which we extract bits.
      * @param size , the size of the new int we extract.
      * @return an int of size size we extracted from the int given from the index start.
-     * @throws IndexOutOfBoundsException if the first index is smaller than 0 or if there is an index bigger than the size of an integer.
+     * @throws IndexOutOfBoundsException if the first index is smaller than 0 or if there
+     * is an index bigger than the size of an integer.
      */
-    
     public static int extract(int bits, int start, int size) {
         Objects.checkFromIndexSize(start, size, Integer.SIZE);
         bits = clip(start + size, bits);
@@ -152,7 +147,6 @@ public final class Bits {
      * @return an int with the bits of index 8 to 31 being 1 if the bit of index 7 is 1, or 0 if the bit of index 7 is 0.
      * @throws IllegalArgumentException if b is not an 8-bit value.
      */
-    
     public static int signExtend8(int b) {
         checkBits8(b);
         byte v = (byte) b;
@@ -162,10 +156,10 @@ public final class Bits {
     /**
      * Reverses an int of 8-bit value.
      * @param b , the int to reverse.
-     * @return an int with the given int reversed bit-to-bit (the bits reversed are the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011.)
+     * @return an int with the given int reversed bit-to-bit (the bits reversed are 
+     * the bits 0 and 7, 1 and 6, 2 and 5, 3 and 4. eg 1100_1010 returns 0101_0011).
      * @throws IllegalArgumentException if b is not an 8-bit value.
      */
-    
     public static int reverse8(int b) {
         checkBits8(b);
         
@@ -178,20 +172,19 @@ public final class Bits {
      * @return an int, with the 1's replaced by 0's, and the 0's replaced by 1's. eg 0110_0100 returns 1001_1011.
      * @throws IllegalArgumentException if b is not an 8-bits value.
      */
-    
     public static int complement8(int b) {
         checkBits8(b);
         return b ^ 0b1111_1111;
     }
 
     /**
-     * Returns a 16-bit int with the two 8-bits parametres.
+     * Returns a 16-bit int with the two 8-bits parameters.
      * @param highB , an 8-bit int which represent the 8 most significant bits of the new int.
      * @param lowB , an 8-bit int which represent the 8 least significant bits of the new int.
-     * @return a 16-bit int with the 8 most significant bits being the ones of highB and the 8 least significant bits being the ones of lowB.
+     * @return a 16-bit int with the 8 most significant bits being the ones of highB and the
+     * 8 least significant bits being the ones of lowB.
      * @throws IllegalArgumentException if b is not an 8-bit value.
      */
-    
     public static int make16(int highB, int lowB) {
         checkBits8(highB);
         checkBits8(lowB);

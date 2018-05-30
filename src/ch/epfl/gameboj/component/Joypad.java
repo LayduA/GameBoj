@@ -8,7 +8,7 @@ import ch.epfl.gameboj.component.cpu.Cpu.Interrupt;
 import ch.epfl.gameboj.bits.Bits;
 
 /**
- * Represents the joypad of the gameboy.
+ * Represents the Joypad of the gameboy.
  * 
  * @author Adrien Laydu, Michael Tasev
  *
@@ -22,7 +22,7 @@ public class Joypad implements Component {
     private int strongBitsP1;
 
     /**
-     * The bits corresponding to each button on the joypad.
+     * The bits corresponding to each button on the Joypad.
      * 
      * @author Adrien Laydu, Michael Tasev
      *
@@ -41,7 +41,6 @@ public class Joypad implements Component {
 
     /**
      * Simulates when a key is pressed.
-     * 
      * @param k : the pressed key.
      */
     public void keyPressed(Key k) {
@@ -55,7 +54,6 @@ public class Joypad implements Component {
 
     /**
      * Simulates when a key is released.
-     * 
      * @param k : the released key.
      */
     public void keyReleased(Key k) {

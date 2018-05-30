@@ -9,7 +9,7 @@ public interface Bit {
     
     /**
      * Because the interface will be used by enumerations, the ordinal method used will be the
-     * default one of the enum type
+     * default one of the enum type.
      * @return the index of the given bit.
      */
     public abstract int ordinal();

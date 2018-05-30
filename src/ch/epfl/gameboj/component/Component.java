@@ -4,14 +4,14 @@ import ch.epfl.gameboj.Bus;
 
 /**
  * A component of a Gameboy.
+ * 
  * @author Adrien Laydu, Michael Tasev
  *
  */
 public interface Component {
     
-    /*
-     * Constant used to represent the fact that the component reads nothing.
-     */
+    
+    // Constant used to represent the fact that the component reads nothing.
     public final static int NO_DATA = 0x100;
     
     /**
@@ -32,7 +32,7 @@ public interface Component {
     
     /**
      * Attach the component to a given bus.
-     * @param bus , the bus the component must be attched to.
+     * @param bus , the bus the component must be attached to.
      * 
      * @see ch.epfl.gameboj.Bus.attach()
      * @throws NullPointerException if the bus is null.

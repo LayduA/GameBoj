@@ -18,6 +18,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
+/**
+ * The main program of the Game Boy.
+ * 
+ * @author Adrien Laydu, Michael Tasev
+ *
+ */
 public class Main extends Application {
 
     private static Map<String, KeyCode> textToKeyCodeMap  = Map.of(
@@ -35,10 +41,18 @@ public class Main extends Application {
             KeyCode.UP,Key.UP,
             KeyCode.DOWN,Key.DOWN);
 
+    /**
+     * Launches the simulator.
+     */
     public static void main(String[] args) {
         Application.launch(args);
     }
 
+    /*
+     * Initiates the program creating a Game Boy with a given Cartridge rom file, setting the
+     * graphic interface and displaying the image on the screen, and updating the image displayed.
+     * @see javafx.application.Application#start(javafx.stage.Stage)
+     */
     public void start(Stage s) throws IOException {
         if (getParameters().getRaw().size() > 1) {
             System.exit(1);
@@ -62,7 +76,7 @@ public class Main extends Application {
                 gb.joypad().keyReleased(keyMap.get(e.getCode()));
             }
         });
-        s.setTitle("gameboj");
+        s.setTitle("Gameboj");
         s.setScene(scene);
         s.show();
         imageView.requestFocus();
@@ -71,7 +85,7 @@ public class Main extends Application {
             @Override
             public void handle(long now) {
                 long elapsed = now - start;
-                gb.runUntil((long) (elapsed * GameBoy.CYCLE_PER_NANOSECOND));
+                gb.runUntil((long) (elapsed * GameBoy.CYCLES_PER_NANOSECOND));
                 imageView.setImage(ImageConverter
                         .convert(gb.lcdController().currentImage()));
 

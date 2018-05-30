@@ -224,13 +224,13 @@ public class CpuTestF {
         
     }*/
     
-    @Test
-    public void readAndWriteWorksB() {
-        Cpu c = new Cpu();
-        Ram r = new Ram(65535);
-        c.write(AddressMap.HIGH_RAM_START+3, 0x13);
-        assertEquals(0x13,c.read(AddressMap.HIGH_RAM_START+3),0.001);
-    }
+//    @Test
+//    public void readAndWriteWorksB() {
+//        Cpu c = new Cpu();
+//        Ram r = new Ram(65535);
+//        c.write(AddressMap.HIGH_RAM_START+3, 0x13);
+//        assertEquals(0x13,c.read(AddressMap.HIGH_RAM_START+3),0.001);
+//    }
 
     @Test
     void CALL_N16WorksE() {
