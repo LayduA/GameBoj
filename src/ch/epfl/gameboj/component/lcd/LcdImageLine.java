@@ -13,11 +13,10 @@ import ch.epfl.gameboj.bits.Bits;
  *
  */
 public final class LcdImageLine {
+    private static final int BASE_COLORS = 0b11100100;
     private BitVector msb;
     private BitVector lsb;
     private BitVector opacity;
-    private static final int BASE_COLORS = 0b11100100;
-
     /**
      * Creates a line of the image.
      * @param msb : the bit vector containing the most significant bits.
@@ -104,6 +103,7 @@ public final class LcdImageLine {
         BitVector finalMsb = new BitVector(size());
         BitVector finalLsb = new BitVector(size());
 
+        //We iterate on colors.
         for (int i = 0; i < 4; i++) {
             final int newColor = getColor(i, transformation);
             final boolean b0 = Bits.test(newColor, 0);
@@ -126,8 +126,7 @@ public final class LcdImageLine {
     }
 
     private int getColor(int index, int value) {
-        
-        return ((0b11 << 2 * index) & value) >> (2 * index);
+        return Bits.extract(value, 2*index, 2);
     }
 
     /**
@@ -144,7 +143,7 @@ public final class LcdImageLine {
 
     /**
      * Composes a line with a given line and an opacity vector, each pixel being from the given line 
-     * if the pixel of the opacity vector is opaque, or from the original line if not.
+     * if the pixel of the opacity vector is opaque (1), or from the original line if not.
      * @param other : the line placed on the original line to compose the new line.
      * @param opacVector : the vector used to select either a pixel from the new line, either a pixel
      * from the original line.
@@ -153,16 +152,17 @@ public final class LcdImageLine {
      */
     public LcdImageLine below(LcdImageLine other, BitVector opacVector) {
         Preconditions.checkArgument(other.size() == size());
-        BitVector newMsb = (other.msb.and(opacVector))
+        final BitVector newMsb = (other.msb.and(opacVector))
                 .or(msb.and(opacVector.not()));
-        BitVector newLsb = (other.lsb.and(opacVector))
+        final BitVector newLsb = (other.lsb.and(opacVector))
                 .or(lsb.and(opacVector.not()));
-        BitVector newOpa = opacity.or(opacVector);
+        final BitVector newOpa = opacity.or(opacVector);
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
     /**
-     * Joins the line with a given line, from a given index (of pixel).
+     * Joins the line with another given line, from a given index (of pixel).
+     * The MSB of the given line will be put right of the MSB of the original line.
      * @param other : the line with which we join our line.
      * @param index : the index of the pixel from which we separate the two lines.
      * @return a new line of the image, with a composition of both lines.
@@ -170,11 +170,11 @@ public final class LcdImageLine {
      */
     public LcdImageLine join(LcdImageLine other, int index) {
         Preconditions.checkArgument(index<other.size()&&index >=0);
-        BitVector mask = (new BitVector(size(), true)).shift(index);
-        BitVector antiMask = mask.not();
-        final BitVector newMsb = (other.msb.and(antiMask)).or(msb.and(mask));
-        final BitVector newLsb = (other.lsb.and(antiMask)).or(lsb.and(mask));
-        final BitVector newOpa = (other.opacity.and(antiMask)).or(opacity.and(mask));
+        final BitVector rightMask = (new BitVector(size(), true)).shift(index);
+        final BitVector leftMask = rightMask.not();
+        final BitVector newMsb = (other.msb.and(rightMask)).or(msb.and(leftMask));
+        final BitVector newLsb = (other.lsb.and(rightMask)).or(lsb.and(leftMask));
+        final BitVector newOpa = (other.opacity.and(rightMask)).or(opacity.and(leftMask));
         return new LcdImageLine(newMsb, newLsb, newOpa);
     }
 
