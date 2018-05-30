@@ -24,7 +24,7 @@ public class ImageConverter {
             for (int j = 0; j<image.height();j++) {
                 int pixelColor = image.get(i, j);
                 int rgb = colors[pixelColor];
-                int argb = 0xFF << 24 | rgb << 16 | rgb << 8 | rgb;
+                int argb = colors[0] << 24 | rgb << 16 | rgb << 8 | rgb;
                 newImage.getPixelWriter().setArgb(i, j, argb);
             }
         }
